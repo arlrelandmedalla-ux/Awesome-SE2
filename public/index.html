@@ -1550,6 +1550,10 @@
     }
 
     .voice-back {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 92px;
       padding: 7px 10px;
       border: 1px solid rgba(255, 255, 255, 0.32);
       border-radius: 9px;
@@ -3905,7 +3909,7 @@
         <h2 id="voiceTitle">Select Service</h2>
       </div>
       <div class="voice-header-actions">
-        <button id="voiceBack" class="voice-back" type="button" hidden>Services</button>
+        <button id="voiceBack" class="voice-back" type="button" aria-label="Return to all services" title="Return to all services" hidden>&larr; All Services</button>
         <button id="voiceClose" class="voice-close" type="button" aria-label="Close assistant">&times;</button>
       </div>
     </header>
