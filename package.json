@@ -4,7 +4,7 @@
     "dev": "npm --prefix Awesome-main run dev"
   },
   "dependencies": {
-    "@google/genai": "^2.31.0",
+    "@google/genai": "^3.3.0",
     "@sendgrid/mail": "^8.1.6"
   }
 }

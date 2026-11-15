@@ -1,8 +1,8 @@
 const { GoogleGenAI, ThinkingLevel, Type } = require("@google/genai");
 const generateContentWithTimeout = require("../scripts/gemini-request");
 
-const GEMINI_MODEL = "gemini-3.8-flash";
-const GEMINI_TRANSLATION_MODEL = "gemini-3.5-flash-lite";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+const GEMINI_TRANSLATION_MODEL = process.env.GEMINI_TRANSLATION_MODEL || GEMINI_MODEL;
 const TRANSLATION_CACHE_TTL_MS = 5 * 60 * 1000;
 const TRANSLATION_CACHE_MAX_ENTRIES = 128;
 const translationCache = new Map();
