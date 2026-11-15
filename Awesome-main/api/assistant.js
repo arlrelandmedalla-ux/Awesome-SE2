@@ -259,22 +259,25 @@ module.exports = async (req, res) => {
       language: output.language,
     });
   } catch (error) {
-    const statusCode = Number(error?.status);
+    const errorMessage = String(error?.message || "");
+    const errorCode = String(error?.code || error?.error?.code || "");
+    const statusCode = Number(error?.status || error?.statusCode || error?.response?.status);
+    const normalizedError = `${errorCode} ${errorMessage}`.toLowerCase();
     console.error("Gemini assistant request failed.", {
       status: statusCode || undefined,
-      code: error?.code || undefined,
-      message: error?.message || "Unknown Gemini error."
+      code: errorCode || undefined,
+      message: errorMessage || "Unknown Gemini error."
     });
     if (error.code === "GEMINI_TIMEOUT") {
       return res.status(504).json({ error: "The AI request timed out. Please try again." });
     }
-    if (statusCode === 401 || statusCode === 403) {
+    if (statusCode === 401 || statusCode === 403 || /api key|permission|unauthorized|forbidden/.test(normalizedError)) {
       return res.status(503).json({ error: "Gemini rejected the API key or its project permissions. Check that the key is active and the Gemini API is enabled for its project." });
     }
-    if (statusCode === 404) {
+    if (statusCode === 404 || /model not found|not found|not available/.test(normalizedError)) {
       return res.status(503).json({ error: "The selected Gemini model is not available to this project." });
     }
-    if (statusCode === 429) {
+    if (statusCode === 429 || /quota|rate.?limit|resource.?exhausted|too many requests/.test(normalizedError)) {
       return res.status(503).json({ error: "The Gemini request quota is currently unavailable. Please try again later." });
     }
     return res.status(502).json({ error: "The assistant could not answer right now. Please try again or contact our team." });
