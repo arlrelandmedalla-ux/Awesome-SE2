@@ -1,7 +1,7 @@
 const { GoogleGenAI, Type } = require("@google/genai");
 const generateContentWithTimeout = require("../scripts/gemini-request");
 
-const GEMINI_MODEL = "gemini-3.8-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 const MAX_IMAGE_BYTES = 1024 * 1024;
 const REQUEST_WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 10;

@@ -6086,6 +6086,11 @@
         if (toggle.contains(e.target)) return; // the toggle handles itself
         setMenu(false);
       });
+      document.addEventListener("scroll", (e) => {
+        if (!menu.classList.contains("open")) return;
+        if (e.target instanceof Node && menu.contains(e.target)) return;
+        setMenu(false);
+      }, true);
       document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
       window.addEventListener("resize", () => { if (window.innerWidth > 760) setMenu(false); });
     })();

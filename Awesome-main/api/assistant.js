@@ -1,7 +1,7 @@
-const { GoogleGenAI, ThinkingLevel, Type } = require("@google/genai");
+const { GoogleGenAI, Type } = require("@google/genai");
 const generateContentWithTimeout = require("../scripts/gemini-request");
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 const GEMINI_TRANSLATION_MODEL = process.env.GEMINI_TRANSLATION_MODEL || GEMINI_MODEL;
 const TRANSLATION_CACHE_TTL_MS = 5 * 60 * 1000;
 const TRANSLATION_CACHE_MAX_ENTRIES = 128;
@@ -65,8 +65,7 @@ async function getTranslation(client, text, sourceLanguage) {
       model: GEMINI_TRANSLATION_MODEL,
       contents: `Translate the following text from ${sourceLanguage === "tl" ? "Tagalog" : "English"} into natural ${targetLanguage}. Return only the translated text, without quotation marks, JSON, or explanations:\n\n${normalizedText}`,
       config: {
-        maxOutputTokens: 2048,
-        thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL }
+        maxOutputTokens: 2048
       },
     });
 
@@ -168,7 +167,7 @@ module.exports = async (req, res) => {
     const client = new GoogleGenAI({
       apiKey,
       httpOptions: {
-        timeout: 18000,
+        timeout: 55000,
         retryOptions: { attempts: 1 }
       }
     });
@@ -229,7 +228,6 @@ module.exports = async (req, res) => {
       config: {
         systemInstruction,
         maxOutputTokens: 512,
-        thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -270,6 +268,9 @@ module.exports = async (req, res) => {
     });
     if (error.code === "GEMINI_TIMEOUT") {
       return res.status(504).json({ error: "The AI request timed out. Please try again." });
+    }
+    if (statusCode === 503 || statusCode === 504) {
+      return res.status(503).json({ error: "Gemini is temporarily unavailable. Please try again in a moment." });
     }
     if (statusCode === 401 || statusCode === 403 || /api key|permission|unauthorized|forbidden/.test(normalizedError)) {
       return res.status(503).json({ error: "Gemini rejected the API key or its project permissions. Check that the key is active and the Gemini API is enabled for its project." });

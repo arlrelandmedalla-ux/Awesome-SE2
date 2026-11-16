@@ -1,4 +1,4 @@
-const GEMINI_REQUEST_TIMEOUT_MS = 20000;
+const GEMINI_REQUEST_TIMEOUT_MS = 60000;
 
 async function generateContentWithTimeout(client, request, timeoutMs = GEMINI_REQUEST_TIMEOUT_MS) {
   const controller = new AbortController();
