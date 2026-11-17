@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -1537,6 +1537,13 @@
       line-height: 1.35;
     }
 
+    .voice-header p.voice-service-scope {
+      margin-top: 2px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 0.74rem;
+      line-height: 1.35;
+    }
+
     .voice-header-actions {
       display: flex;
       flex-shrink: 0;
@@ -1885,6 +1892,54 @@
       cursor: pointer;
       touch-action: manipulation;
       pointer-events: auto;
+    }
+
+    .voice-compose #voiceListen svg {
+      display: block;
+      flex: 0 0 auto;
+    }
+
+    .voice-listen-label {
+      margin-left: 7px;
+    }
+
+    .voice-wave {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .voice-wave span {
+      width: 3px;
+      height: 9px;
+      border-radius: 999px;
+      background: currentColor;
+      animation: voice-wave 0.8s ease-in-out infinite alternate;
+    }
+
+    .voice-wave span:nth-child(2) { animation-delay: 0.16s; }
+    .voice-wave span:nth-child(3) { animation-delay: 0.32s; }
+
+    .voice-compose #voiceListen.is-listening {
+      border-color: rgba(53, 215, 232, 0.72);
+      background: rgba(53, 215, 232, 0.16);
+      color: #9af0f3;
+    }
+
+    .voice-compose #voiceListen.is-listening .voice-mic-icon {
+      display: none;
+    }
+
+    .voice-compose #voiceListen.is-listening .voice-wave {
+      display: inline-flex;
+    }
+
+    @keyframes voice-wave {
+      from { transform: scaleY(0.55); opacity: 0.65; }
+      to { transform: scaleY(1.45); opacity: 1; }
     }
 
     .voice-compose textarea {
@@ -2514,6 +2569,10 @@
 
       .voice-compose #voiceListen {
         font-size: 0;
+      }
+
+      .voice-listen-label {
+        display: none;
       }
 
     }
@@ -3913,7 +3972,10 @@
     <header class="voice-header">
       <div class="voice-header-copy">
         <img class="voice-header-logo" src="public/logo-awe.jpg" alt="Awesome Accounting Services logo" />
-        <h2 id="voiceTitle">Select Service</h2>
+        <div>
+          <h2 id="voiceTitle">Select Service</h2>
+          <p id="voiceServiceScope" class="voice-service-scope" hidden>AI responses are based only on this service.</p>
+        </div>
       </div>
       <div class="voice-header-actions">
         <button id="voiceBack" class="voice-back" type="button" aria-label="Return to services" title="Return to services" hidden>Services</button>
@@ -3926,7 +3988,9 @@
     <form id="voiceForm" class="voice-compose" hidden>
       <textarea id="voiceQuestion" rows="1" maxlength="1000" placeholder="Ask a follow-up question..." aria-label="Your question" autocomplete="off" autocorrect="on" autocapitalize="sentences" enterkeyhint="send" inputmode="text" required></textarea>
       <button id="voiceListen" type="button" aria-label="Start voice input" title="Speak your question" hidden>
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2Z" fill="currentColor"/></svg>
+        <svg class="voice-mic-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2Z" fill="currentColor"/></svg>
+        <span class="voice-wave" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="voice-listen-label">Use microphone</span>
       </button>
       <button id="voiceSend" type="submit">Send</button>
     </form>
@@ -5093,6 +5157,7 @@
       const closeButton = document.getElementById("voiceClose");
       const backButton = document.getElementById("voiceBack");
       const title = document.getElementById("voiceTitle");
+      const serviceScope = document.getElementById("voiceServiceScope");
       const listenButton = document.getElementById("voiceListen");
       const tabs = document.getElementById("serviceTabs");
       const log = document.getElementById("voiceLog");
@@ -5108,6 +5173,11 @@
       let activeService = null;
       let recognition = null;
       let listening = false;
+      let finalizedTranscript = "";
+      let pendingTranscript = "";
+      let discardTranscriptOnEnd = false;
+      let manualStopRequested = false;
+      let transcriptBase = "";
       let busy = false;
       let activeSpeechButton = null;
       let activeSpeechFeedback = null;
@@ -5257,7 +5327,7 @@
             backButton.focus();
           }
         } else {
-          stopListening();
+          stopListening(true);
           stopSpeaking();
         }
       }
@@ -5805,6 +5875,7 @@
       function showSelectedService() {
         panel.classList.add("is-chat");
         title.textContent = activeService.title;
+        serviceScope.hidden = false;
         tabs.hidden = true;
         backButton.hidden = false;
         log.hidden = false;
@@ -5819,7 +5890,7 @@
         conversation.length = 0;
         questionInput.value = "";
         resizeQuestionInput();
-        stopListening();
+        stopListening(true);
         stopSpeaking();
         log.replaceChildren();
         [...tabs.children].forEach((tab) => tab.setAttribute("aria-pressed", "false"));
@@ -5827,6 +5898,7 @@
         panel.classList.remove("is-chat");
         syncChatViewport();
         title.textContent = "Select Services";
+        serviceScope.hidden = true;
         tabs.hidden = false;
         backButton.hidden = true;
         log.hidden = true;
@@ -5916,43 +5988,121 @@
       document.addEventListener("scroll", closeOverlaysOnPageScroll, { capture: true, passive: true });
       document.addEventListener("wheel", closeOverlaysOnPageScroll, { capture: true, passive: true });
       document.addEventListener("touchmove", closeOverlaysOnPageScroll, { capture: true, passive: true });
-      function stopListening() {
-        if (recognition && listening) recognition.stop();
+      function stopListening(discard = false) {
+        discardTranscriptOnEnd = discard;
+        manualStopRequested = true;
+        if (recognition && listening) {
+          recognition.stop();
+        } else {
+          finishListening();
+        }
+        listenButton.classList.remove("is-listening");
+        listenButton.setAttribute("aria-pressed", "false");
+        listenButton.setAttribute("aria-label", "Start voice input");
+        listenButton.title = "Speak your question";
+      }
+
+      function finishListening() {
+        const transcript = pendingTranscript.trim();
+        const shouldDiscard = discardTranscriptOnEnd;
+        if (!shouldDiscard) {
+          questionInput.value = [transcriptBase, transcript].filter(Boolean).join(" ");
+          resizeQuestionInput();
+          focusQuestionInput();
+        }
+        if (shouldDiscard) {
+          questionInput.value = transcriptBase;
+          resizeQuestionInput();
+        }
+        if (!shouldDiscard && !transcript) {
+          questionInput.value = transcriptBase;
+          resizeQuestionInput();
+          status.textContent = "Please try again. We couldn't clearly hear your recording.";
+        }
+        pendingTranscript = "";
+        finalizedTranscript = "";
+        transcriptBase = "";
+        discardTranscriptOnEnd = false;
+        manualStopRequested = false;
         listening = false;
-        listenButton.textContent = "Use microphone";
+        listenButton.classList.remove("is-listening");
+        listenButton.setAttribute("aria-pressed", "false");
+        listenButton.setAttribute("aria-label", "Start voice input");
+        listenButton.title = "Speak your question";
+        if (!shouldDiscard && transcript) {
+          status.textContent = "Recording finished. Review your question before sending.";
+        }
       }
 
       if (SpeechRecognition) {
         recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.continuous = true;
+        recognition.interimResults = true;
         recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          questionInput.value = [questionInput.value.trim(), transcript].filter(Boolean).join(" ");
+          const finalized = [];
+          const interim = [];
+          for (let index = event.resultIndex; index < event.results.length; index += 1) {
+            const result = event.results[index];
+            if (result.isFinal) finalized.push(result[0].transcript);
+            else interim.push(result[0].transcript);
+          }
+          finalizedTranscript = [finalizedTranscript, finalized.join(" ")]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+          pendingTranscript = [finalizedTranscript, interim.join(" ")]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+          questionInput.value = [transcriptBase, pendingTranscript].filter(Boolean).join(" ");
           resizeQuestionInput();
-          focusQuestionInput();
+          status.textContent = "Recording... click the microphone again to finish.";
         };
         recognition.onerror = (event) => {
+          if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+            manualStopRequested = true;
+          }
           status.textContent = event.error === "not-allowed"
             ? "Microphone access was denied. Allow microphone access or type your question."
             : `Speech recognition error: ${event.error}. You can type your question instead.`;
         };
         recognition.onend = () => {
-          listening = false;
-          listenButton.textContent = "Use microphone";
+          if (listening && !manualStopRequested) {
+            window.setTimeout(() => {
+              if (!listening || manualStopRequested) return;
+              try {
+                recognition.start();
+              } catch (error) {
+                status.textContent = "Could not continue speech recognition. Click the microphone to try again.";
+              }
+            }, 50);
+            return;
+          }
+          finishListening();
         };
         listenButton.addEventListener("click", () => {
           if (listening) {
+            discardTranscriptOnEnd = false;
             stopListening();
             return;
           }
+          pendingTranscript = "";
+          finalizedTranscript = "";
+          transcriptBase = questionInput.value.trim();
+          discardTranscriptOnEnd = false;
+          manualStopRequested = false;
           recognition.lang = lastResponseLanguage === "tl" ? "fil-PH" : "en-PH";
           try {
             recognition.start();
             listening = true;
-            listenButton.textContent = "Stop listening";
-            status.textContent = "Listening...";
+            listenButton.classList.add("is-listening");
+            listenButton.setAttribute("aria-pressed", "true");
+            listenButton.setAttribute("aria-label", "Stop recording");
+            listenButton.title = "Stop recording";
+            status.textContent = "Recording... click the microphone again to finish.";
           } catch (error) {
+            listening = false;
+            listenButton.classList.remove("is-listening");
             status.textContent = "Could not start speech recognition. Please try again or type your question.";
           }
         });
