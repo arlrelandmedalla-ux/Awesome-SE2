@@ -1226,8 +1226,24 @@
     .gallery-lightbox-description {
       width: min(900px, 100%);
       justify-self: center;
-      padding: 0 12px 8px;
+      margin: 0;
       color: var(--ink);
+      text-align: center;
+    }
+
+    .gallery-lightbox-caption {
+      display: grid;
+      width: min(900px, 100%);
+      justify-self: center;
+      gap: 6px;
+      padding: 0 12px 8px;
+      text-align: center;
+    }
+
+    .gallery-lightbox-date {
+      margin: 0;
+      color: rgba(232, 245, 255, 0.78);
+      font-size: 0.95rem;
       text-align: center;
     }
 
@@ -1894,13 +1910,13 @@
       pointer-events: auto;
     }
 
+    .voice-listen-label {
+      display: none;
+    }
+
     .voice-compose #voiceListen svg {
       display: block;
       flex: 0 0 auto;
-    }
-
-    .voice-listen-label {
-      margin-left: 7px;
     }
 
     .voice-wave {
@@ -3693,7 +3709,10 @@
       <div class="gallery-lightbox-video-stage" id="galleryLightboxVideoStage" hidden>
         <video class="gallery-lightbox-video" id="galleryLightboxVideo" controls controlslist="nodownload" disablepictureinpicture playsinline tabindex="0"></video>
       </div>
-      <p class="gallery-lightbox-description" id="galleryLightboxDescription"></p>
+      <div class="gallery-lightbox-caption">
+        <p class="gallery-lightbox-description" id="galleryLightboxDescription"></p>
+        <time class="gallery-lightbox-date" id="galleryLightboxDate"></time>
+      </div>
       <button type="button" class="gallery-lightbox-nav gallery-lightbox-previous" id="galleryLightboxPrevious" aria-label="Previous gallery item">‹</button>
       <button type="button" class="gallery-lightbox-nav gallery-lightbox-next" id="galleryLightboxNext" aria-label="Next gallery item">›</button>
     </div>
@@ -3990,7 +4009,6 @@
       <button id="voiceListen" type="button" aria-label="Start voice input" title="Speak your question" hidden>
         <svg class="voice-mic-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2Z" fill="currentColor"/></svg>
         <span class="voice-wave" aria-hidden="true"><span></span><span></span><span></span></span>
-        <span class="voice-listen-label">Use microphone</span>
       </button>
       <button id="voiceSend" type="submit">Send</button>
     </form>
@@ -4193,6 +4211,16 @@
         // ===== 2026 =====
         {
           year: "2026",
+          src: "/about-me/2026/9.1_1.jpg",
+          type: "image",
+          addedAt: 1795150883153.3674,
+          version: "248765-mwohun6c",
+          title: "Gallery Photo",
+          description: "A photo from January 1, 2026.",
+          date: "2026-01-01"
+        },
+        {
+          year: "2026",
           src: "/about-me/2026/6.1_2.jpg",
           type: "image",
           addedAt: 1794076877646.4138,
@@ -4317,6 +4345,7 @@
       const galleryLightboxVideoStage = document.getElementById("galleryLightboxVideoStage");
       const galleryLightboxVideo = document.getElementById("galleryLightboxVideo");
       const galleryLightboxDescription = document.getElementById("galleryLightboxDescription");
+      const galleryLightboxDate = document.getElementById("galleryLightboxDate");
       const galleryLightboxBack = document.getElementById("galleryLightboxBack");
       const galleryLightboxPrevious = document.getElementById("galleryLightboxPrevious");
       const galleryLightboxNext = document.getElementById("galleryLightboxNext");
@@ -4353,6 +4382,8 @@
         galleryLightboxBack.hidden = false;
         galleryLightboxImage.hidden = true;
         galleryLightboxDescription.textContent = "";
+        galleryLightboxDate.textContent = "";
+        galleryLightboxDate.removeAttribute("datetime");
         if (lightboxTrigger) lightboxTrigger.focus();
         lightboxTrigger = null;
         lightboxIndex = -1;
@@ -4393,6 +4424,10 @@
           galleryLightboxImage.addEventListener("load", () => rememberLoadedGallerySource(item, galleryLightboxImage), { once: true });
         }
         galleryLightboxDescription.textContent = item.description;
+        galleryLightboxDate.dateTime = item.date;
+        galleryLightboxDate.textContent = new Date(`${item.date}T00:00:00`).toLocaleDateString(undefined, {
+          year: "numeric", month: "long", day: "numeric"
+        });
       }
 
       function retryLightboxVideoWithPublicPath() {
@@ -4655,17 +4690,6 @@
             year: "numeric", month: "long", day: "numeric"
           });
           caption.append(title, description, date);
-          if (item.captionStatus) {
-            const captionStatus = document.createElement("p");
-            captionStatus.className = "gallery-caption-status";
-            captionStatus.setAttribute("role", "status");
-            captionStatus.textContent = item.captionStatus === "pending"
-              ? "Generating an AI-suggested description..."
-              : item.captionStatus === "suggested"
-                ? "AI suggestion is saved in this browser only. Edit scripts/gallery-descriptions.js to keep it in the project."
-                : "AI description unavailable. Start or deploy the caption backend.";
-            caption.append(captionStatus);
-          }
           figure.append(videoStage || media, caption);
           galleryGrid.append(figure);
         });
@@ -5184,6 +5208,8 @@
       let activeUtterance = null;
       let conversationVersion = 0;
       let lastResponseLanguage = /^(tl|fil)(-|$)/i.test(navigator.language) ? "tl" : "en";
+      let listeningPromptTimer = null;
+      let listeningPromptIndex = 0;
 
       function resizeQuestionInput() {
         questionInput.style.height = "auto";
@@ -5234,7 +5260,16 @@
         launcher.classList.add("keyboard-open");
       }
 
-      questionInput.addEventListener("input", resizeQuestionInput);
+      questionInput.addEventListener("input", () => {
+        resizeQuestionInput();
+        if (listening) {
+          transcriptBase = questionInput.value.trim();
+          finalizedTranscript = "";
+          pendingTranscript = "";
+          listeningPromptIndex = 0;
+          status.textContent = "Recording... newly spoken words will be added after your edit.";
+        }
+      });
       questionInput.addEventListener("focus", () => {
         syncChatViewport();
         window.setTimeout(syncChatViewport, 250);
@@ -5991,6 +6026,7 @@
       function stopListening(discard = false) {
         discardTranscriptOnEnd = discard;
         manualStopRequested = true;
+        clearListeningPrompt();
         if (recognition && listening) {
           recognition.stop();
         } else {
@@ -6002,7 +6038,30 @@
         listenButton.title = "Speak your question";
       }
 
+      function clearListeningPrompt() {
+        if (listeningPromptTimer) {
+          window.clearInterval(listeningPromptTimer);
+          listeningPromptTimer = null;
+        }
+        listeningPromptIndex = 0;
+      }
+
+      function startListeningPrompt() {
+        clearListeningPrompt();
+        listeningPromptTimer = window.setInterval(() => {
+          if (!listening) {
+            clearListeningPrompt();
+            return;
+          }
+          listeningPromptIndex += 1;
+          status.textContent = listeningPromptIndex % 2 === 1
+            ? "Still listening... keep speaking or press the microphone again to finish."
+            : "Listening continues... you can speak again or stop recording.";
+        }, 10000);
+      }
+
       function finishListening() {
+        clearListeningPrompt();
         const transcript = pendingTranscript.trim();
         const shouldDiscard = discardTranscriptOnEnd;
         if (!shouldDiscard) {
@@ -6100,6 +6159,7 @@
             listenButton.setAttribute("aria-label", "Stop recording");
             listenButton.title = "Stop recording";
             status.textContent = "Recording... click the microphone again to finish.";
+            startListeningPrompt();
           } catch (error) {
             listening = false;
             listenButton.classList.remove("is-listening");

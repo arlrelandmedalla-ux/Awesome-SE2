@@ -36,6 +36,8 @@ module.exports = {
     // Media/file: public/about-me/2026/8.1_3.jpg
     "8.1_3.jpg": {"title":"Gallery Photo","description":"A photo from January 3, 2026."},
     // Media/file: public/about-me/2026/8.3_1.jpg
-    "8.3_1.jpg": {"title":"Autumn Colors","description":"Vibrant red leaves frame a sunlit tree above a lush green garden."}
+    "8.3_1.jpg": {"title":"Autumn Colors","description":"Vibrant red leaves frame a sunlit tree above a lush green garden."},
+    // Media/file: public/about-me/2026/9.1_1.jpg
+    "9.1_1.jpg": {"title":"Gallery Photo","description":"A photo from January 1, 2026."}
   }
 };

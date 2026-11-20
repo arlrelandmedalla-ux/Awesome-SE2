@@ -53,6 +53,19 @@
   },
   {
     "year": "2026",
+    "src": "/about-me/2026/9.1_1.jpg",
+    "type": "image",
+    "addedAt": 1795150883153.3674,
+    "version": "248765-mwohun6c",
+    "title": "Gallery Photo",
+    "description": "A photo from January 1, 2026.",
+    "date": "2026-01-01",
+    "month": 1,
+    "day": 1,
+    "imageNumber": 9
+  },
+  {
+    "year": "2026",
     "src": "/about-me/2026/6.1_2.jpg",
     "type": "image",
     "addedAt": 1794076877646.4138,
