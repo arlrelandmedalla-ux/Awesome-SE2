@@ -4685,7 +4685,7 @@
           const empty = document.createElement("p");
           empty.className = "gallery-empty";
           empty.textContent = selectedYear !== "all" && !selectedYearIsAvailable
-            ? "No record yet."
+            ? "No records yet."
             : selectedYearIsAvailable && galleryItems.length
               ? "No image here yet for the selected year and month."
               : "No image here yet for this year. Add an image to its year folder using the imageNumber.month_day filename format.";
@@ -5197,7 +5197,7 @@
         if (!year || year.toLowerCase() === "all years") {
           selectedYear = "all";
         } else {
-          selectedYear = /^\d{4}$/.test(year) ? year : "all";
+          selectedYear = /^\d{4,}$/.test(year) ? year : "all";
         }
         updateGalleryDateLabel();
         renderGallery();
