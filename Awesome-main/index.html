@@ -4307,6 +4307,16 @@
         },
         {
           year: "2025",
+          src: "/about-me/2025/1.1_5.jpg",
+          type: "image",
+          addedAt: 1795454026571.1846,
+          version: "210585-mwtdy12h",
+          title: "Gallery Photo",
+          description: "A photo from the company gallery.",
+          date: "2025-01-05"
+        },
+        {
+          year: "2025",
           src: "/about-me/2025/3.3_1.jpg",
           type: "image",
           addedAt: 1794506350540.2212,
@@ -4824,7 +4834,7 @@
       let galleryManifestErrorReported = false;
       let galleryRefreshInProgress = false;
       let lastGalleryRefreshAt = 0;
-      const galleryRefreshIntervalMs = 60_000;
+      const galleryRefreshIntervalMs = 10_000;
 
       function getGalleryMediaFromFile(year, fileName) {
         const match = fileName.match(/^(\d+)\.(\d{1,2})_(\d{1,2})\.(jpg|jpeg|png|gif|webp|mp4|webm|ogv)$/i);
@@ -5183,54 +5193,51 @@
 
       async function refreshGallery() {
         let manifest;
-        try {
-          manifest = await discoverGalleryImages();
-        } catch (scanError) {
-          const manifestCandidates = [
-            {
-              url: new URL("public/gallery-manifest.json", document.baseURI),
-              assetPrefix: new URL("public/", document.baseURI).pathname
-            },
-            {
-              url: new URL("gallery-manifest.json", document.baseURI),
-              assetPrefix: ""
-            },
-            {
-              url: new URL("/gallery-manifest.json", window.location.origin),
-              assetPrefix: ""
-            },
-            {
-              url: new URL("/Awesome-main/public/gallery-manifest.json", window.location.origin),
-              assetPrefix: "/Awesome-main/public/"
-            }
-          ];
-          let manifestLoaded = false;
-          for (const candidate of manifestCandidates) {
-            let response;
-            try {
-              response = await fetch(`${candidate.url.href}?updated=${Date.now()}`, { cache: "no-store" });
-            } catch (error) {
-              continue;
-            }
-            if (!response.ok) continue;
-            manifest = await response.json();
-            if (candidate.assetPrefix) {
-              manifest = manifest.map((item) => ({
-                ...item,
-                src: new URL(`${candidate.assetPrefix}${item.src.replace(/^\//, "")}`, window.location.origin).href
-              }));
-            }
-            manifestLoaded = true;
-            break;
+        const manifestCandidates = [
+          {
+            url: new URL("public/gallery-manifest.json", document.baseURI),
+            assetPrefix: new URL("public/", document.baseURI).pathname
+          },
+          {
+            url: new URL("gallery-manifest.json", document.baseURI),
+            assetPrefix: ""
+          },
+          {
+            url: new URL("/gallery-manifest.json", window.location.origin),
+            assetPrefix: ""
+          },
+          {
+            url: new URL("/Awesome-main/public/gallery-manifest.json", window.location.origin),
+            assetPrefix: "/Awesome-main/public/"
           }
-          if (!manifestLoaded) throw scanError;
+        ];
+        let manifestLoaded = false;
+        for (const candidate of manifestCandidates) {
+          let response;
+          try {
+            response = await fetch(`${candidate.url.href}?updated=${Date.now()}`, { cache: "no-store" });
+          } catch (error) {
+            continue;
+          }
+          if (!response.ok) continue;
+          manifest = await response.json();
+          if (candidate.assetPrefix) {
+            manifest = manifest.map((item) => ({
+              ...item,
+              src: new URL(`${candidate.assetPrefix}${item.src.replace(/^\//, "")}`, window.location.origin).href
+            }));
+          }
+          manifestLoaded = true;
+          break;
         }
+        if (!manifestLoaded) manifest = await discoverGalleryImages();
         if (!Array.isArray(manifest)) throw new Error("Gallery image list has an invalid format.");
 
         const signature = JSON.stringify(manifest);
         if (signature === loadedGalleryManifest) return;
         loadedGalleryManifest = signature;
         const existingDescriptions = new Map(galleryItems.map((item) => [getGalleryItemKey(item), item]));
+        const newItems = manifest.filter((item) => !existingDescriptions.has(getGalleryItemKey(item)));
         const savedCaptions = readGalleryCaptionCache();
         const updatedCaptionCache = {};
         const captionsToGenerate = [];
@@ -5278,6 +5285,12 @@
           };
           return updatedItem;
         });
+        if (newItems.length) {
+          const newYears = [...new Set(newItems.map((item) => item.year))];
+          selectedYear = newYears.length === 1 ? newYears[0] : "all";
+          selectedMonth = "all";
+          galleryExpanded = true;
+        }
         writeGalleryCaptionCache(updatedCaptionCache);
         initializeGallery();
         if (!galleryLightbox.hidden) showLightboxMedia();

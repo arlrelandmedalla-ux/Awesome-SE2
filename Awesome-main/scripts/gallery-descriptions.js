@@ -8,6 +8,8 @@ module.exports = {
   "2025": {
     // Media/file: public/about-me/2025/1.1_4.jpg
     "1.1_4.jpg": {"title":"Mountain at Dusk","description":"A rugged mountain ridge glows beneath a soft pink evening sky, ARL."},
+    // Media/file: public/about-me/2025/1.1_5.jpg
+    "1.1_5.jpg": {"title":"Gallery Photo","description":"A photo from the company gallery."},
     // Media/file: public/about-me/2025/2.12_1.jpg
     "2.12_1.jpg": {"title":"Gallery Photo","description":"A photo from the company gallery."},
     // Media/file: public/about-me/2025/3.3_1.jpg

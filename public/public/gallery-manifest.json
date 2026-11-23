@@ -27,6 +27,19 @@
   },
   {
     "year": "2025",
+    "src": "/about-me/2025/1.1_5.jpg",
+    "type": "image",
+    "addedAt": 1795454026571.1846,
+    "version": "210585-mwtdy12h",
+    "title": "Gallery Photo",
+    "description": "A photo from the company gallery.",
+    "date": "2025-01-05",
+    "month": 1,
+    "day": 5,
+    "imageNumber": 1
+  },
+  {
+    "year": "2025",
     "src": "/about-me/2025/3.3_1.jpg",
     "type": "image",
     "addedAt": 1794506350540.2212,
