@@ -28,7 +28,7 @@ module.exports = {
     // Media/file: public/about-me/2026/5.5_1.jpg
     "5.5_1.jpg": {"title":"Lakeside Sky","description":"Blue evening clouds and warm sunset colors reflect across a calm lake."},
     // Media/file: public/about-me/2026/6.1_2.jpg
-    "6.1_2.jpg": {"title":"Gallery Photo","description":"A photo from the company gallery."},
+    "6.1_2.jpg": {"title":"Mountain Lake","description":"An illustrated mountain range, evergreen trees, and clouds surround a blue lake."},
     // Media/file: public/about-me/2026/7.1_4.jpg
     "7.1_4.jpg": {"title":"Gallery Photo","description":"A photo from the company gallery."},
     // Media/file: public/about-me/2026/7.4_1.jpg
@@ -38,6 +38,6 @@ module.exports = {
     // Media/file: public/about-me/2026/8.3_1.jpg
     "8.3_1.jpg": {"title":"Autumn Colors","description":"Vibrant red leaves frame a sunlit tree above a lush green garden."},
     // Media/file: public/about-me/2026/9.1_1.jpg
-    "9.1_1.jpg": {"title":"Gallery Photo","description":"A photo from the company gallery."}
+    "9.1_1.jpg": {"title":"Reviewing Documents","description":"Two colleagues work together reviewing paperwork at an office desk."}
   }
 };

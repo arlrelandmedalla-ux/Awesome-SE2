@@ -7,6 +7,11 @@ const REQUEST_WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 10;
 const requestCounts = new Map();
 
+function limitToTwoSentences(text) {
+  const sentences = text.match(/[^.!?]+(?:[.!?]+|$)/g) || [];
+  return sentences.slice(0, 2).join("").trim();
+}
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -69,12 +74,13 @@ module.exports = async (req, res) => {
               mediaType === "video"
                 ? "Write a concise gallery caption in English based only on the visible content in these ordered frames from one video."
                 : "Write a concise gallery caption in English based only on what is visibly present in this image.",
+              "Describe a specific, distinguishing visible detail instead of using a generic caption.",
               ...(mediaType === "video"
                 ? ["Summarize the scene or action across the frames instead of describing the frames individually."]
                 : []),
               "Do not identify people or infer names, ages, private details, exact locations, or events that are not clearly visible.",
               "Do not include dates, years, or times; the gallery displays the media date separately.",
-              "Return a short title (up to 6 words) and one sentence description (up to 24 words)."
+              "Return a short title (up to 6 words) and a concise description of no more than two sentences."
             ].join(" ")
           },
           { inlineData: { mimeType: "image/jpeg", data: dataUrlMatch[1] } }
@@ -94,20 +100,22 @@ module.exports = async (req, res) => {
     });
 
     const caption = JSON.parse(result.text || "");
+    const description = typeof caption.description === "string"
+      ? limitToTwoSentences(caption.description.trim())
+      : "";
     if (
       typeof caption.title !== "string"
       || !caption.title.trim()
       || caption.title.length > 80
-      || typeof caption.description !== "string"
-      || !caption.description.trim()
-      || caption.description.length > 300
+      || !description
+      || description.length > 300
     ) {
       throw new Error("Gemini returned an invalid gallery caption.");
     }
 
     return res.status(200).json({
       title: caption.title.trim(),
-      description: caption.description.trim()
+      description
     });
   } catch (error) {
     console.error("Gallery caption request failed:", error?.message || error);

@@ -1040,6 +1040,8 @@
     }
 
     .gallery-card {
+      display: flex;
+      flex-direction: column;
       position: relative;
       overflow: hidden;
       border: 1px solid var(--line);
@@ -1103,6 +1105,9 @@
     }
 
     .gallery-card figcaption {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
       padding: 15px 18px;
       transition: background 0.25s ease, transform 0.25s ease;
     }
@@ -1122,6 +1127,8 @@
 
     .gallery-card time {
       display: block;
+      margin-top: auto;
+      padding-top: 12px;
       color: var(--muted);
       font-size: 0.88rem;
     }
@@ -2508,7 +2515,8 @@
       }
 
       .gallery-card time {
-        margin-top: 4px;
+        margin-top: auto;
+        padding-top: 8px;
         font-size: 0.66rem;
         line-height: 1.3;
       }
@@ -4324,8 +4332,8 @@
           type: "image",
           addedAt: 1795150883153.3674,
           version: "248765-mwohun6c",
-          title: "Gallery Photo",
-          description: "A photo from the company gallery.",
+          title: "Reviewing Documents",
+          description: "Two colleagues work together reviewing paperwork at an office desk.",
           date: "2026-01-01"
         },
         {
@@ -4334,8 +4342,8 @@
           type: "image",
           addedAt: 1794076877646.4138,
           version: "5516947-mw6r1clx",
-          title: "Gallery Photo",
-          description: "A photo from the company gallery.",
+          title: "Mountain Lake",
+          description: "An illustrated mountain range, evergreen trees, and clouds surround a blue lake.",
           date: "2026-01-02"
         },
         {
@@ -4883,7 +4891,7 @@
         return `${item.year}/${fileName}`;
       }
 
-      const galleryCaptionStorageKey = "awesome-gallery-caption-cache-v2";
+      const galleryCaptionStorageKey = "awesome-gallery-caption-cache-v3";
       const pendingGalleryCaptions = new Set();
 
       function readGalleryCaptionCache() {
