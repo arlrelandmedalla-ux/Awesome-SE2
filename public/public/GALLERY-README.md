@@ -54,6 +54,7 @@ Examples:
 - `extension`: supported file format
 
 The year comes from the folder name. For example, `public/about-me/2026/1.1_20.jpg` becomes January 20, 2026.
+Keep the extension in the actual filename: `11.2_3.jpg` is valid, while `11.2_3` is not recognized as gallery media.
 
 Use a unique `imageNumber` for each file unless an image and video belong to the same entry.
 

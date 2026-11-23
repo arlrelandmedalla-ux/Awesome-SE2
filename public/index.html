@@ -1521,11 +1521,11 @@
     .voice-panel {
       position: fixed;
       left: 24px;
-      bottom: 90px;
+      bottom: 105px;
       z-index: 60;
       display: flex;
       flex-direction: column;
-      width: min(600px, calc(100vw - 32px));
+      width: min(500px, calc(100vw - 48px));
       max-height: min(720px, calc(100vh - 120px));
       max-height: min(720px, calc(100dvh - 120px));
       min-height: 0;
@@ -1665,17 +1665,13 @@
 
     .service-tabs {
       display: grid;
-      flex: 0 1 auto;
+      flex: 0 0 auto;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       align-content: start;
       gap: 7px;
-      max-height: 220px;
-      min-height: 0;
-      overflow-y: auto;
+      overflow: visible;
       padding: 12px 16px;
       border-bottom: 1px solid var(--line);
-      overscroll-behavior: contain;
-      scrollbar-gutter: stable;
     }
 
     .service-tab {
@@ -2552,16 +2548,16 @@
 
       .voice-panel {
         left: 8px;
-        bottom: max(70px, calc(env(safe-area-inset-bottom) + 60px));
-        width: min(360px, calc(100vw - 24px));
+        bottom: max(85px, calc(env(safe-area-inset-bottom) + 72px));
+        width: min(340px, calc(100vw - 32px));
         max-height: calc(100svh - 82px);
         max-height: calc(100dvh - 82px);
       }
 
       .voice-panel:not(.is-chat) {
-        left: 12px;
-        width: min(360px, calc(100vw - 24px));
-        max-height: min(360px, calc(100dvh - 100px));
+        left: 16px;
+        width: min(340px, calc(100vw - 32px));
+        max-height: min(440px, calc(100dvh - 100px));
         border-radius: 16px;
       }
 
@@ -2601,16 +2597,15 @@
       }
 
       .service-tabs {
-        max-height: min(150px, 22dvh);
-        gap: 6px;
-        padding: 9px 10px;
+        gap: 5px;
+        padding: 8px;
       }
 
       .service-tab {
-        min-height: 36px;
-        padding: 6px 8px;
-        font-size: 0.72rem;
-        line-height: 1.3;
+        min-height: 34px;
+        padding: 5px 7px;
+        font-size: 0.68rem;
+        line-height: 1.2;
       }
 
       .voice-panel:not(.is-chat) .voice-header {
@@ -2621,6 +2616,36 @@
         min-height: 20px;
         padding: 2px 10px 0;
         font-size: 0.7rem;
+      }
+
+      @media (max-height: 380px) {
+        .voice-panel:not(.is-chat) {
+          top: max(8px, env(safe-area-inset-top, 0px));
+          bottom: auto;
+          max-height: calc(100dvh - 16px);
+        }
+
+        .voice-panel:not(.is-chat) .voice-header {
+          padding: 6px 10px;
+        }
+
+        .voice-panel:not(.is-chat) .voice-header-logo {
+          flex-basis: 28px;
+          width: 28px;
+          height: 28px;
+        }
+
+        .service-tabs {
+          gap: 4px;
+          padding: 6px;
+        }
+
+        .service-tab {
+          min-height: 30px;
+          padding: 3px 5px;
+          font-size: 0.62rem;
+          line-height: 1.1;
+        }
       }
 
       .voice-compose {
@@ -4482,6 +4507,13 @@
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
       ];
+      function getNewestGalleryItem(items) {
+        return items.reduce((newest, item) =>
+          Number.isFinite(item.addedAt) && (!newest || item.addedAt > newest.addedAt) ? item : newest,
+        null);
+      }
+
+      const newestInitialGalleryItem = getNewestGalleryItem(galleryItems);
       const galleryYear = document.getElementById("galleryYear");
       const galleryYearSuggestions = document.getElementById("galleryYearSuggestions");
       const galleryGrid = document.getElementById("galleryGrid");
@@ -4503,7 +4535,7 @@
       const galleryDateLabel = document.getElementById("galleryDateLabel");
       const galleryMonthButtons = document.querySelectorAll(".gallery-month-option");
       let selectedMonth = "all";
-      const defaultGalleryYear = "2026";
+      const defaultGalleryYear = newestInitialGalleryItem?.year || "2026";
       let availableGalleryYears = [];
       let allGalleryYearSuggestions = [];
       let selectedYear = defaultGalleryYear;
@@ -4754,8 +4786,16 @@
         lightboxItems = filtered;
 
         galleryGrid.replaceChildren();
-        const visibleGalleryCount = galleryExpanded ? filtered.length : 3;
-        galleryShowMore.hidden = filtered.length <= 3;
+        const newestGalleryItem = getNewestGalleryItem(galleryItems);
+        const newestVisibleIndex = newestGalleryItem
+          && (selectedYear === "all" || newestGalleryItem.year === selectedYear)
+          ? filtered.findIndex((item) => getGalleryItemKey(item) === getGalleryItemKey(newestGalleryItem))
+          : -1;
+        const visibleGalleryCount = galleryExpanded
+          ? filtered.length
+          : Math.max(3, newestVisibleIndex + 1);
+        galleryShowMore.hidden = filtered.length <= 3
+          || (!galleryExpanded && filtered.length <= visibleGalleryCount);
         galleryShowMore.setAttribute("aria-expanded", String(galleryExpanded));
         galleryShowMore.setAttribute("aria-label", galleryExpanded ? "Show fewer gallery images" : "Show all gallery images");
         galleryShowMoreLabel.textContent = galleryExpanded ? "Show less" : "Show more";

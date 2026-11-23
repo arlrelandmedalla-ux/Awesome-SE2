@@ -4,11 +4,11 @@ const path = require("node:path");
 
 const root = path.join(__dirname, "..");
 const galleryRoot = path.join(root, "public", "about-me");
-const outputGalleryRoot = path.join(root, "..", "public", "public", "about-me");
 const generatorPath = path.join(__dirname, "generate-gallery-manifest.js");
 const rootBuildPath = path.join(root, "..", "scripts", "vercel-build.js");
 const syncGalleryMedia = require("./sync-gallery-media");
 const mediaPattern = /\.(jpg|jpeg|png|gif|webp|mp4|webm|ogv)$/i;
+const galleryFilePattern = /^\d+\.\d{1,2}_\d{1,2}(?:\.[^.]+)?$/i;
 
 const envFile = [path.join(root, ".env"), path.join(root, "..", ".env")]
   .find((filePath) => fs.existsSync(filePath));
@@ -36,17 +36,17 @@ function getGalleryRootSignature(directory) {
     const yearPath = path.join(directory, yearFolder.name);
     entries.push(`${yearFolder.name}/`);
     for (const file of fs.readdirSync(yearPath, { withFileTypes: true })) {
-      if (!file.isFile() || !mediaPattern.test(file.name)) continue;
+      if (!file.isFile() || (!mediaPattern.test(file.name) && !galleryFilePattern.test(file.name))) continue;
       const filePath = path.join(yearPath, file.name);
       const stats = fs.statSync(filePath);
-      entries.push(`${yearFolder.name}/${file.name}:${stats.size}:${stats.mtimeMs}`);
+      entries.push(`${yearFolder.name}/${file.name}:${stats.size}:${stats.mtimeMs}:${stats.ctimeMs}`);
     }
   }
   return entries.sort().join("|");
 }
 
 function getGallerySignature() {
-  return `${getGalleryRootSignature(galleryRoot)}||${getGalleryRootSignature(outputGalleryRoot)}`;
+  return getGalleryRootSignature(galleryRoot);
 }
 
 function regenerateGallery() {
@@ -69,23 +69,34 @@ if (syncGalleryMedia() && !regenerateGallery()) process.exit(1);
 
 const server = spawn(process.execPath, [path.join(__dirname, "local-server.js")], {
   cwd: root,
-  stdio: "inherit"
+  stdio: "inherit",
+  env: {
+    ...process.env,
+    GALLERY_MEDIA_WATCHER_ACTIVE: "1"
+  }
 });
 
 let lastSignature = getGallerySignature();
 let pendingSignature = null;
 let debounceTimer = null;
+const galleryChangeDebounceMs = 1500;
 
 const scanTimer = setInterval(() => {
   const signature = getGallerySignature();
-  if (signature === lastSignature || signature === pendingSignature) return;
+  if (signature === lastSignature) {
+    clearTimeout(debounceTimer);
+    pendingSignature = null;
+    return;
+  }
+  if (signature === pendingSignature) return;
 
   pendingSignature = signature;
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
-    if (regenerateGallery()) lastSignature = pendingSignature;
+    const signatureToBuild = pendingSignature;
+    if (regenerateGallery()) lastSignature = signatureToBuild;
     pendingSignature = null;
-  }, 600);
+  }, galleryChangeDebounceMs);
 }, 750);
 
 function stop(signal) {

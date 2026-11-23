@@ -17,6 +17,7 @@ for (const envPath of [path.join(root, ".env"), path.resolve(root, "..", ".env")
 }
 const port = Number(process.env.PORT) || 3000;
 const bodyLimit = 2 * 1024 * 1024;
+const galleryMediaWatcherActive = process.env.GALLERY_MEDIA_WATCHER_ACTIVE === "1";
 const apiHandlers = new Map([
   ["/api/assistant", require("../api/assistant")],
   ["/api/contact", require("../api/contact")],
@@ -154,14 +155,16 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (/(?:^|\/)gallery-manifest\.json$/i.test(requestUrl.pathname)) {
-    try {
-      refreshGalleryManifest();
-      response.setHeader("Cache-Control", "no-store");
-    } catch (error) {
-      console.error("Could not refresh the gallery manifest.", error);
-      response.writeHead(500).end("Could not refresh gallery media.");
-      return;
+    if (!galleryMediaWatcherActive) {
+      try {
+        refreshGalleryManifest();
+      } catch (error) {
+        console.error("Could not refresh the gallery manifest.", error);
+        response.writeHead(500).end("Could not refresh gallery media.");
+        return;
+      }
     }
+    response.setHeader("Cache-Control", "no-store");
   }
 
   const requestPath = requestUrl.pathname === "/" ? "/index.html" : requestUrl.pathname;

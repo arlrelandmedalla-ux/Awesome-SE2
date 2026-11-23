@@ -46,7 +46,15 @@ for (const yearFolder of yearFolders) {
   const yearDescriptions = {};
 
   for (const file of files) {
-    if (!/\.(jpg|jpeg|png|gif|webp|mp4|webm|ogv)$/i.test(file.name)) continue;
+    if (!/\.(jpg|jpeg|png|gif|webp|mp4|webm|ogv)$/i.test(file.name)) {
+      if (/^\d+\.\d{1,2}_\d{1,2}(?:\.[^.]+)?$/i.test(file.name)) {
+        console.warn(
+          `Unsupported gallery media filename "${yearFolder.name}/${file.name}". `
+          + "Include a supported extension such as .jpg, .jpeg, .png, .webp, or .mp4."
+        );
+      }
+      continue;
+    }
 
     const match = file.name.match(mediaPattern);
     if (!match) {
