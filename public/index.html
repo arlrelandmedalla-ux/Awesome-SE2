@@ -5280,7 +5280,8 @@
           setGalleryDatePickerOpen(false);
         }
       }
-      document.addEventListener("pointerdown", closeGalleryDatePickerOnOutsideInteraction);
+      document.addEventListener("pointerdown", closeGalleryDatePickerOnOutsideInteraction, { capture: true });
+      document.addEventListener("touchstart", closeGalleryDatePickerOnOutsideInteraction, { capture: true, passive: true });
       document.addEventListener("click", closeGalleryDatePickerOnOutsideInteraction);
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
