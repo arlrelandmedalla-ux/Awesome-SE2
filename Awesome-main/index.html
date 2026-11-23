@@ -3,6 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+  <script>
+    const navigationEntry = performance.getEntriesByType("navigation")[0];
+    if (navigationEntry?.type === "reload" && "scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+      window.addEventListener("pageshow", () => {
+        const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = "auto";
+        window.scrollTo(0, 0);
+        document.documentElement.style.scrollBehavior = previousScrollBehavior;
+        history.scrollRestoration = "auto";
+      }, { once: true });
+    }
+  </script>
   <title>Awesome Accounting Services | Company Profile</title>
   <meta
     name="description"
