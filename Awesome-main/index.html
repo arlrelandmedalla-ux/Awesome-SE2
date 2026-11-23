@@ -4438,6 +4438,16 @@
         },
         {
           year: "2026",
+          src: "/about-me/2026/11.2_2.jpg",
+          type: "image",
+          addedAt: 1795455578804.236,
+          version: "487563-mwtjvh5u",
+          title: "Gallery Photo",
+          description: "A photo from the company gallery.",
+          date: "2026-02-02"
+        },
+        {
+          year: "2026",
           src: "/about-me/2026/8.3_1.jpg",
           type: "image",
           addedAt: 1794075034966.582,
@@ -5247,8 +5257,13 @@
         if (signature === loadedGalleryManifest) return;
         loadedGalleryManifest = signature;
         const existingDescriptions = new Map(galleryItems.map((item) => [getGalleryItemKey(item), item]));
-        const newItems = manifest.filter((item) => !existingDescriptions.has(getGalleryItemKey(item)));
         const savedCaptions = readGalleryCaptionCache();
+        const previouslyKnownKeys = new Set(Object.keys(savedCaptions));
+        const newItems = manifest.filter((item) => {
+          const key = getGalleryItemKey(item);
+          return !existingDescriptions.has(key)
+            || (previouslyKnownKeys.size > 0 && !previouslyKnownKeys.has(key));
+        });
         const updatedCaptionCache = {};
         const captionsToGenerate = [];
         galleryItems = manifest.map((item) => {
