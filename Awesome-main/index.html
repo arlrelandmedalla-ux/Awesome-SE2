@@ -864,7 +864,7 @@
 
     .gallery-date-panel {
       position: absolute;
-      z-index: 20;
+      z-index: 50;
       right: 0;
       top: calc(100% + 10px);
       display: grid;
@@ -5220,12 +5220,14 @@
           renderGallery();
         });
       });
-      document.addEventListener("click", (event) => {
+      function closeGalleryDatePickerOnOutsideInteraction(event) {
         if (!galleryDatePicker.contains(event.target)) {
           galleryYearSuggestions.hidden = true;
           setGalleryDatePickerOpen(false);
         }
-      });
+      }
+      document.addEventListener("pointerdown", closeGalleryDatePickerOnOutsideInteraction);
+      document.addEventListener("click", closeGalleryDatePickerOnOutsideInteraction);
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           if (!galleryYearSuggestions.hidden) {
@@ -6083,6 +6085,14 @@
       });
       function closeOverlaysOnPageScroll(event) {
         const scrollTarget = event.target;
+        if (
+          !galleryDatePanel.hidden
+          && !(scrollTarget instanceof Node && galleryDatePicker.contains(scrollTarget))
+        ) {
+          galleryYearSuggestions.hidden = true;
+          setGalleryDatePickerOpen(false);
+        }
+
         if (
           panel.contains(document.activeElement)
           ||
