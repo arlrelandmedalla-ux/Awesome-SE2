@@ -3446,6 +3446,8 @@
 
       .stat-card {
         padding: 13px 10px;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
       }
 
       .stat-card strong {
@@ -3484,6 +3486,12 @@
     }
 
     @media (max-width: 760px) {
+      .site-nav,
+      .nav-links {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+      }
+
       .nav-inner {
         position: relative;
       }
@@ -4684,6 +4692,7 @@
           } else {
             media.alt = item.title;
             media.loading = "lazy";
+            media.decoding = "async";
             media.tabIndex = 0;
             media.setAttribute("role", "button");
             media.setAttribute("aria-label", `View full-size image: ${item.title}`);
@@ -4715,6 +4724,8 @@
       let loadedGalleryManifest = "";
       let galleryManifestErrorReported = false;
       let galleryRefreshInProgress = false;
+      let lastGalleryRefreshAt = 0;
+      const galleryRefreshIntervalMs = 60_000;
 
       function getGalleryMediaFromFile(year, fileName) {
         const match = fileName.match(/^(\d+)\.(\d{1,2})_(\d{1,2})\.(jpg|jpeg|png|gif|webp|mp4|webm|ogv)$/i);
@@ -5081,8 +5092,12 @@
       }
 
       function refreshGalleryManifestWithLogging() {
-        if (galleryRefreshInProgress) return;
+        if (
+          galleryRefreshInProgress
+          || Date.now() - lastGalleryRefreshAt < galleryRefreshIntervalMs
+        ) return;
         galleryRefreshInProgress = true;
+        lastGalleryRefreshAt = Date.now();
         refreshGallery()
           .then(() => {
             galleryManifestErrorReported = false;
@@ -5098,7 +5113,12 @@
       }
 
       refreshGalleryManifestWithLogging();
-      window.setInterval(refreshGalleryManifestWithLogging, 5000);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) refreshGalleryManifestWithLogging();
+      });
+      window.setInterval(() => {
+        if (!document.hidden) refreshGalleryManifestWithLogging();
+      }, galleryRefreshIntervalMs);
       galleryLightboxBack.addEventListener("click", closeGalleryLightbox);
       galleryLightboxPrevious.addEventListener("click", () => moveLightboxImage(-1));
       galleryLightboxNext.addEventListener("click", () => moveLightboxImage(1));
