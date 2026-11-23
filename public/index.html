@@ -4827,16 +4827,10 @@
         lightboxItems = filtered;
 
         galleryGrid.replaceChildren();
-        const newestGalleryItem = getNewestGalleryItem(galleryItems);
-        const newestVisibleIndex = newestGalleryItem
-          && (selectedYear === "all" || newestGalleryItem.year === selectedYear)
-          ? filtered.findIndex((item) => getGalleryItemKey(item) === getGalleryItemKey(newestGalleryItem))
-          : -1;
         const visibleGalleryCount = galleryExpanded
           ? filtered.length
-          : Math.max(3, newestVisibleIndex + 1);
-        galleryShowMore.hidden = filtered.length <= 3
-          || (!galleryExpanded && filtered.length <= visibleGalleryCount);
+          : Math.min(3, filtered.length);
+        galleryShowMore.hidden = filtered.length <= 3;
         galleryShowMore.setAttribute("aria-expanded", String(galleryExpanded));
         galleryShowMore.setAttribute("aria-label", galleryExpanded ? "Show fewer gallery images" : "Show all gallery images");
         galleryShowMoreLabel.textContent = galleryExpanded ? "Show less" : "Show more";
@@ -5354,7 +5348,6 @@
           const newYears = [...new Set(newItems.map((item) => item.year))];
           selectedYear = newYears.length === 1 ? newYears[0] : "all";
           selectedMonth = "all";
-          galleryExpanded = true;
         }
         initializeGallery();
         if (!galleryLightbox.hidden) showLightboxMedia();
