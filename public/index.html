@@ -870,6 +870,10 @@
       display: grid;
       width: min(248px, calc(100vw - 40px));
       gap: 14px;
+      max-height: min(60dvh, 480px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
       padding: 14px;
       border: 1px solid rgba(53, 215, 232, 0.2);
       border-radius: 18px;
@@ -901,6 +905,8 @@
       display: grid;
       max-height: 88px;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
       margin-top: -8px;
       padding: 2px;
       border: 1px solid rgba(165, 203, 229, 0.18);
