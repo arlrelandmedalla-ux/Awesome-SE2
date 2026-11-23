@@ -9,10 +9,6 @@ const galleryStartMarker = "        // AUTO-GALLERY-ITEMS-START";
 const galleryEndMarker = "        // AUTO-GALLERY-ITEMS-END";
 const mediaPattern = /^(\d+)\.(\d{1,2})_(\d{1,2})\.(jpg|jpeg|png|gif|webp|mp4|webm|ogv)$/i;
 const imageExtensions = new Set(["jpg", "jpeg", "png", "gif", "webp"]);
-const monthNames = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-];
 const existingDescriptions = require(descriptionsPath);
 const previousGalleryItems = fs.existsSync(manifestPath)
   ? JSON.parse(fs.readFileSync(manifestPath, "utf8"))
@@ -70,13 +66,12 @@ for (const yearFolder of yearFolders) {
     }
 
     const date = `${yearFolder.name}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const displayDate = `${monthNames[month - 1]} ${day}, ${yearFolder.name}`;
     const type = imageExtensions.has(file.name.split(".").pop().toLowerCase()) ? "image" : "video";
     const stats = fs.statSync(path.join(yearPath, file.name));
     const previousAddedAt = previousAddedAtByFile.get(`${yearFolder.name}/${file.name}`);
     const imageDescription = existingDescriptions[yearFolder.name]?.[file.name] || {
       title: type === "image" ? "Gallery Photo" : "Gallery Video",
-      description: `A ${type === "image" ? "photo" : "video"} from ${displayDate}.`
+      description: `A ${type === "image" ? "photo" : "video"} from the company gallery.`
     };
     yearDescriptions[file.name] = imageDescription;
     galleryItems.push({

@@ -78,7 +78,7 @@ After saving:
 2. The build updates `public/gallery-manifest.json` and the gallery items in `index.html`.
 3. Commit `scripts/gallery-descriptions.js`, the media file, and the generated updates.
 
-Keep titles concise and descriptions factual. A description of 24 words or fewer is recommended.
+Keep titles concise and descriptions factual. A description of 24 words or fewer is recommended. Do not include the media date in the description because the gallery displays it separately.
 
 ## Removing or replacing a file
 

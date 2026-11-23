@@ -4283,7 +4283,7 @@
           addedAt: 1794079261921.6733,
           version: "201253-mw6sgkz7",
           title: "Gallery Photo",
-          description: "A photo from January 1, 2024.",
+          description: "A photo from the company gallery.",
           date: "2024-01-01"
         },
         // ===== 2025 =====
@@ -4304,7 +4304,7 @@
           addedAt: 1794506350540.2212,
           version: "563097-mwduqca4",
           title: "Gallery Photo",
-          description: "A photo from March 1, 2025.",
+          description: "A photo from the company gallery.",
           date: "2025-03-01"
         },
         {
@@ -4314,7 +4314,7 @@
           addedAt: 1794076231299.836,
           version: "2069010-mw6qn9f5",
           title: "Gallery Photo",
-          description: "A photo from December 1, 2025.",
+          description: "A photo from the company gallery.",
           date: "2025-12-01"
         },
         // ===== 2026 =====
@@ -4325,7 +4325,7 @@
           addedAt: 1795150883153.3674,
           version: "248765-mwohun6c",
           title: "Gallery Photo",
-          description: "A photo from January 1, 2026.",
+          description: "A photo from the company gallery.",
           date: "2026-01-01"
         },
         {
@@ -4335,7 +4335,7 @@
           addedAt: 1794076877646.4138,
           version: "5516947-mw6r1clx",
           title: "Gallery Photo",
-          description: "A photo from January 2, 2026.",
+          description: "A photo from the company gallery.",
           date: "2026-01-02"
         },
         {
@@ -4345,7 +4345,7 @@
           addedAt: 1794568780372.2288,
           version: "734650-mwevu4qk",
           title: "Gallery Photo",
-          description: "A photo from January 3, 2026.",
+          description: "A photo from the company gallery.",
           date: "2026-01-03"
         },
         {
@@ -4355,7 +4355,7 @@
           addedAt: 1794568796803.697,
           version: "1314807-mwdwccft",
           title: "Gallery Photo",
-          description: "A photo from January 4, 2026.",
+          description: "A photo from the company gallery.",
           date: "2026-01-04"
         },
         {
@@ -4375,7 +4375,7 @@
           addedAt: 1794170582538.321,
           version: "35806769-msfnhmo4",
           title: "Gallery Video",
-          description: "A video from January 19, 2026.",
+          description: "A video from the company gallery.",
           date: "2026-01-19"
         },
         {
@@ -4839,7 +4839,7 @@
           src: `/public/about-me/${year}/${fileName}`,
           type,
           title: `${type === "image" ? "Image" : "Video"} ${imageNumber}`,
-          description: `A ${type === "image" ? "photo" : "video"} from ${months[month - 1]} ${day}, ${year}.`,
+          description: `A ${type === "image" ? "photo" : "video"} from the company gallery.`,
           date: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
           month,
           day,
@@ -4883,7 +4883,7 @@
         return `${item.year}/${fileName}`;
       }
 
-      const galleryCaptionStorageKey = "awesome-gallery-caption-cache";
+      const galleryCaptionStorageKey = "awesome-gallery-caption-cache-v2";
       const pendingGalleryCaptions = new Set();
 
       function readGalleryCaptionCache() {
@@ -4906,7 +4906,7 @@
 
       function hasDefaultGalleryCaption(item) {
         return (item.title === "Gallery Photo" || /^Image \d+$/.test(item.title))
-          && /^A photo from /.test(item.description);
+          && item.description === "A photo from the company gallery.";
       }
 
       function blobToDataUrl(blob) {
@@ -5136,9 +5136,6 @@
           const knownVersion = previousItem?.version ?? savedCaption?.version;
           const imageChanged = knownVersion !== undefined && knownVersion !== item.version;
           const updatedItem = { ...item };
-          const isNewImage = (
-            !previousItem || previousItem.version === undefined
-          ) && savedCaption?.version === undefined && hasDefaultGalleryCaption(updatedItem);
 
           if (previousItem && !imageChanged) {
             if (
@@ -5164,7 +5161,7 @@
             updatedItem.captionStatus = "suggested";
           }
 
-          if (item.type === "image" && item.version && (imageChanged || isNewImage)) {
+          if (item.type === "image" && item.version && (imageChanged || hasDefaultGalleryCaption(updatedItem))) {
             updatedItem.captionStatus = "pending";
             captionsToGenerate.push(updatedItem);
           }

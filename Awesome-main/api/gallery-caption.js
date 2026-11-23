@@ -65,6 +65,7 @@ module.exports = async (req, res) => {
             text: [
               "Write a concise gallery caption in English based only on what is visibly present in this image.",
               "Do not identify people or infer names, ages, private details, exact locations, or events that are not clearly visible.",
+              "Do not include dates, years, or times; the gallery displays the media date separately.",
               "Return a short title (up to 6 words) and one sentence description (up to 24 words)."
             ].join(" ")
           },
