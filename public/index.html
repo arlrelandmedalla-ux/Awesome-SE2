@@ -2967,7 +2967,7 @@
     .telegram-link { --contact-accent: #55b8e8; }
     .viber-link { --contact-accent: #b49bff; }
 
-    .floating-links a.viber-chat-link {
+    .floating-links a.viber-download-link {
       justify-self: end;
       min-width: 0;
       min-height: 0;
@@ -3928,17 +3928,17 @@
         <span class="contact-copy"><strong>Telegram</strong><small>Chat with our team</small></span>
         <span class="contact-arrow" aria-hidden="true">↗</span>
       </a>
-      <a class="floating-contact viber-link" href="https://www.viber.com/en/download/" target="_blank" rel="noopener noreferrer" aria-label="Download Viber">
+      <a class="floating-contact viber-link" href="viber://chat?number=%2B639679326649" aria-label="Message us on Viber">
         <span class="contact-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none">
             <path d="M5 4.5h14A2.5 2.5 0 0 1 21.5 7v9a2.5 2.5 0 0 1-2.5 2.5h-5.2L9 21v-2.5H5A2.5 2.5 0 0 1 2.5 16V7A2.5 2.5 0 0 1 5 4.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
             <path d="M8 9c.4 2.8 2.2 4.6 5 5M14 8.5c1 .3 1.7 1 2 2M14 6.5c2.2.4 3.6 1.8 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
         </span>
-        <span class="contact-copy"><strong>Viber</strong><small>Download or install the app</small></span>
+        <span class="contact-copy"><strong>Viber</strong><small>Chat with our team</small></span>
         <span class="contact-arrow" aria-hidden="true">↗</span>
       </a>
-      <a class="viber-chat-link" href="viber://chat?number=%2B639679326649">Already have Viber? Open chat</a>
+      <a class="viber-download-link" href="https://www.viber.com/download/" target="_blank" rel="noopener noreferrer">No Viber app? Download it</a>
     </div>
   </div>
 
@@ -4039,6 +4039,22 @@
   <script>
     const talkToUsToggle = document.getElementById("talkToUsToggle");
     const floatingContactPanel = document.getElementById("floatingContactPanel");
+
+    document.addEventListener("click", (event) => {
+      if (!(event.target instanceof Element) || !event.target.closest('a[href^="viber://"]')) return;
+
+      const fallbackTimer = window.setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          window.location.assign("https://www.viber.com/download/");
+        }
+      }, 1600);
+      const cancelFallback = () => window.clearTimeout(fallbackTimer);
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") cancelFallback();
+      }, { once: true });
+      window.addEventListener("blur", cancelFallback, { once: true });
+    });
 
     if (talkToUsToggle && floatingContactPanel) {
       talkToUsToggle.addEventListener("click", () => {
