@@ -4473,6 +4473,16 @@
         },
         {
           year: "2026",
+          src: "/about-me/2026/12.2_2.jpg",
+          type: "image",
+          addedAt: 1795459146727.8943,
+          version: "683139-mw56rxio",
+          title: "Gallery Photo",
+          description: "A photo from the company gallery.",
+          date: "2026-02-02"
+        },
+        {
+          year: "2026",
           src: "/about-me/2026/8.3_1.jpg",
           type: "image",
           addedAt: 1794075034966.582,
@@ -4894,7 +4904,7 @@
       let galleryManifestErrorReported = false;
       let galleryRefreshInProgress = false;
       let lastGalleryRefreshAt = 0;
-      const galleryRefreshIntervalMs = 10_000;
+      const galleryRefreshIntervalMs = 3_000;
 
       function getGalleryMediaFromFile(year, fileName) {
         const match = fileName.match(/^(\d+)\.(\d{1,2})_(\d{1,2})\.(jpg|jpeg|png|gif|webp|mp4|webm|ogv)$/i);

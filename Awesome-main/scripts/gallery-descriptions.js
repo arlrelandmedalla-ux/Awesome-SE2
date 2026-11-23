@@ -23,6 +23,8 @@ module.exports = {
     "10.1_1.jpg": {"title":"Gallery Photo","description":"A photo from the company gallery."},
     // Media/file: public/about-me/2026/11.2_2.jpg
     "11.2_2.jpg": {"title":"Gallery Photo","description":"A photo from the company gallery."},
+    // Media/file: public/about-me/2026/12.2_2.jpg
+    "12.2_2.jpg": {"title":"Gallery Photo","description":"A photo from the company gallery."},
     // Media/file: public/about-me/2026/2.1_19.jpg
     "2.1_19.jpg": {"title":"Cloudscape","description":"Soft clouds fill the sky in this gentle, dreamy scene."},
     // Media/file: public/about-me/2026/2.1_19.mp4

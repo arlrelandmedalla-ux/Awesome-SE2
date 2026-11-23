@@ -1,12 +1,9 @@
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
 
 const root = path.resolve(__dirname, "..");
 const publicRoot = path.join(root, "public");
-const galleryGeneratorPath = path.join(__dirname, "generate-gallery-manifest.js");
-const syncGalleryMedia = require("./sync-gallery-media");
 for (const envPath of [path.join(root, ".env"), path.resolve(root, "..", ".env")]) {
   if (fs.existsSync(envPath)) {
     if (typeof process.loadEnvFile !== "function") {
@@ -17,7 +14,6 @@ for (const envPath of [path.join(root, ".env"), path.resolve(root, "..", ".env")
 }
 const port = Number(process.env.PORT) || 3000;
 const bodyLimit = 2 * 1024 * 1024;
-const galleryMediaWatcherActive = process.env.GALLERY_MEDIA_WATCHER_ACTIVE === "1";
 const apiHandlers = new Map([
   ["/api/assistant", require("../api/assistant")],
   ["/api/contact", require("../api/contact")],
@@ -128,18 +124,6 @@ function resolveStaticFile(urlPath) {
   return null;
 }
 
-function refreshGalleryManifest() {
-  syncGalleryMedia();
-  const result = spawnSync(process.execPath, [galleryGeneratorPath], {
-    cwd: root,
-    encoding: "utf8"
-  });
-  if (result.error) throw result.error;
-  if (result.status !== 0) {
-    throw new Error((result.stderr || result.stdout || `Exited with code ${result.status}.`).trim());
-  }
-}
-
 const server = http.createServer(async (request, response) => {
   const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
   const apiHandler = apiHandlers.get(requestUrl.pathname);
@@ -155,15 +139,6 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (/(?:^|\/)gallery-manifest\.json$/i.test(requestUrl.pathname)) {
-    if (!galleryMediaWatcherActive) {
-      try {
-        refreshGalleryManifest();
-      } catch (error) {
-        console.error("Could not refresh the gallery manifest.", error);
-        response.writeHead(500).end("Could not refresh gallery media.");
-        return;
-      }
-    }
     response.setHeader("Cache-Control", "no-store");
   }
 

@@ -4,8 +4,8 @@ const path = require("node:path");
 
 const root = path.join(__dirname, "..");
 const galleryRoot = path.join(root, "public", "about-me");
+const outputGalleryRoot = path.join(root, "..", "public", "public", "about-me");
 const generatorPath = path.join(__dirname, "generate-gallery-manifest.js");
-const rootBuildPath = path.join(root, "..", "scripts", "vercel-build.js");
 const syncGalleryMedia = require("./sync-gallery-media");
 const mediaPattern = /\.(jpg|jpeg|png|gif|webp|mp4|webm|ogv)$/i;
 const galleryFilePattern = /^\d+\.\d{1,2}_\d{1,2}(?:\.[^.]+)?$/i;
@@ -46,14 +46,17 @@ function getGalleryRootSignature(directory) {
 }
 
 function getGallerySignature() {
-  return getGalleryRootSignature(galleryRoot);
+  return `${getGalleryRootSignature(galleryRoot)}||${getGalleryRootSignature(outputGalleryRoot)}`;
 }
 
 function regenerateGallery() {
-  if (!fs.existsSync(rootBuildPath)) syncGalleryMedia();
-  const buildPath = fs.existsSync(rootBuildPath) ? rootBuildPath : generatorPath;
-  const workingDirectory = path.dirname(buildPath);
-  const result = spawnSync(process.execPath, [buildPath], { cwd: workingDirectory, stdio: "inherit" });
+  try {
+    syncGalleryMedia();
+  } catch (error) {
+    console.error("Could not synchronize gallery media.", error);
+    return false;
+  }
+  const result = spawnSync(process.execPath, [generatorPath], { cwd: root, stdio: "inherit" });
   if (result.error) {
     console.error("Could not rebuild the gallery.", result.error);
     return false;
@@ -65,15 +68,11 @@ function regenerateGallery() {
   return true;
 }
 
-if (syncGalleryMedia() && !regenerateGallery()) process.exit(1);
+if (!regenerateGallery()) process.exit(1);
 
 const server = spawn(process.execPath, [path.join(__dirname, "local-server.js")], {
   cwd: root,
-  stdio: "inherit",
-  env: {
-    ...process.env,
-    GALLERY_MEDIA_WATCHER_ACTIVE: "1"
-  }
+  stdio: "inherit"
 });
 
 let lastSignature = getGallerySignature();
@@ -93,8 +92,7 @@ const scanTimer = setInterval(() => {
   pendingSignature = signature;
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
-    const signatureToBuild = pendingSignature;
-    if (regenerateGallery()) lastSignature = signatureToBuild;
+    if (regenerateGallery()) lastSignature = getGallerySignature();
     pendingSignature = null;
   }, galleryChangeDebounceMs);
 }, 750);
