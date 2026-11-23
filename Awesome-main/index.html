@@ -4545,13 +4545,13 @@
           : availableGalleryYears;
         const options = document.createDocumentFragment();
         galleryYearSuggestions.replaceChildren();
-        suggestedYears.forEach((year) => {
+        function addYearSuggestion(label, year) {
           const option = document.createElement("div");
           option.className = "gallery-year-suggestion";
           option.setAttribute("role", "option");
           option.setAttribute("aria-selected", String(year === selectedYear));
           option.tabIndex = 0;
-          option.textContent = year;
+          option.textContent = label;
           option.addEventListener("pointerdown", (event) => {
             event.preventDefault();
             selectGalleryYear(year);
@@ -4566,18 +4566,21 @@
             }
           });
           options.append(option);
-        });
+        }
+        addYearSuggestion("All years", "all");
+        suggestedYears.forEach((year) => addYearSuggestion(year, year));
         galleryYearSuggestions.append(options);
-        galleryYearSuggestions.hidden = !suggestedYears.length;
+        galleryYearSuggestions.hidden = !options.childElementCount;
       }
 
       function selectGalleryYear(year) {
-        galleryYear.value = year;
+        galleryYear.value = year === "all" ? "" : year;
         selectedYear = year;
         galleryYearSuggestions.hidden = true;
         updateGalleryDateLabel();
         renderGallery();
-        galleryYear.focus({ preventScroll: true });
+        setGalleryDatePickerOpen(false);
+        galleryDateToggle.focus({ preventScroll: true });
       }
 
       function initializeGallery() {
@@ -5224,6 +5227,9 @@
           selectedMonth = button.dataset.month;
           updateGalleryDateLabel();
           renderGallery();
+          galleryYearSuggestions.hidden = true;
+          setGalleryDatePickerOpen(false);
+          galleryDateToggle.focus({ preventScroll: true });
         });
       });
       function closeGalleryDatePickerOnOutsideInteraction(event) {
