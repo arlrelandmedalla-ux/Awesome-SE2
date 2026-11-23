@@ -85,8 +85,8 @@ Keep titles concise and descriptions factual. A description of 24 words or fewer
 ## Removing or replacing a file
 
 1. Remove or replace the file under `public/about-me/<YEAR>/`.
-2. If removing it, delete its matching entry from `scripts/gallery-descriptions.js`.
-3. Run `npm run build`.
+2. While `npm run dev` is running, the watcher removes it from the generated copy and manifest; the open website removes it on its next automatic check.
+3. For deployment, run `npm run build` and deploy the updated files.
 
 ## Testing locally
 

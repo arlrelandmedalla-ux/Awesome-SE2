@@ -1,4 +1,3 @@
-const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -32,13 +31,6 @@ function readGalleryFiles(root) {
   return files;
 }
 
-function fileDigest(file, digests) {
-  if (!digests.has(file.path)) {
-    digests.set(file.path, crypto.createHash("sha256").update(fs.readFileSync(file.path)).digest("hex"));
-  }
-  return digests.get(file.path);
-}
-
 function removeGalleryFile(root, relativePath) {
   const filePath = path.join(root, relativePath);
   if (!fs.existsSync(filePath)) return;
@@ -52,59 +44,21 @@ function copyGalleryFile(source, targetRoot, relativePath) {
   fs.copyFileSync(source.path, targetPath);
 }
 
-function compareChanges(source, output) {
-  if (source.mtimeMs !== output.mtimeMs) return source.mtimeMs - output.mtimeMs;
-  return source.ctimeMs - output.ctimeMs;
-}
-
 function syncGalleryMedia() {
   const sourceFiles = readGalleryFiles(sourceRoot);
   const outputFiles = readGalleryFiles(outputRoot);
-  const sourceOnly = [...sourceFiles.values()].filter((file) => !outputFiles.has(file.relativePath));
-  const outputOnly = [...outputFiles.values()].filter((file) => !sourceFiles.has(file.relativePath));
-  const digests = new Map();
-  const pairedSource = new Set();
-  const pairedOutput = new Set();
   let changed = false;
-
-  for (const sourceFile of sourceOnly) {
-    const matchingOutput = outputOnly.find((outputFile) =>
-      !pairedOutput.has(outputFile.relativePath)
-      && outputFile.size === sourceFile.size
-      && fileDigest(outputFile, digests) === fileDigest(sourceFile, digests)
-    );
-    if (!matchingOutput) continue;
-
-    const renamedFile = compareChanges(sourceFile, matchingOutput) > 0 ? sourceFile : matchingOutput;
-    copyGalleryFile(renamedFile, sourceRoot, renamedFile.relativePath);
-    copyGalleryFile(renamedFile, outputRoot, renamedFile.relativePath);
-    const oldPath = renamedFile === sourceFile ? matchingOutput.relativePath : sourceFile.relativePath;
-    removeGalleryFile(sourceRoot, oldPath);
-    removeGalleryFile(outputRoot, oldPath);
-    pairedSource.add(sourceFile.relativePath);
-    pairedOutput.add(matchingOutput.relativePath);
-    changed = true;
-  }
-
-  for (const file of sourceOnly) {
-    if (pairedSource.has(file.relativePath)) continue;
-    copyGalleryFile(file, outputRoot, file.relativePath);
-    changed = true;
-  }
-
-  for (const file of outputOnly) {
-    if (pairedOutput.has(file.relativePath)) continue;
-    copyGalleryFile(file, sourceRoot, file.relativePath);
-    changed = true;
-  }
 
   for (const [relativePath, sourceFile] of sourceFiles) {
     const outputFile = outputFiles.get(relativePath);
-    if (!outputFile) continue;
-    if (sourceFile.size === outputFile.size && sourceFile.mtimeMs === outputFile.mtimeMs) continue;
+    if (outputFile && sourceFile.size === outputFile.size && sourceFile.mtimeMs === outputFile.mtimeMs) continue;
+    copyGalleryFile(sourceFile, outputRoot, relativePath);
+    changed = true;
+  }
 
-    const newerFile = compareChanges(sourceFile, outputFile) > 0 ? sourceFile : outputFile;
-    copyGalleryFile(newerFile, newerFile === sourceFile ? outputRoot : sourceRoot, relativePath);
+  for (const relativePath of outputFiles.keys()) {
+    if (sourceFiles.has(relativePath)) continue;
+    removeGalleryFile(outputRoot, relativePath);
     changed = true;
   }
 
