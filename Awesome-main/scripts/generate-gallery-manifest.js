@@ -95,8 +95,8 @@ galleryItems.sort((a, b) =>
   Number(a.year) - Number(b.year)
   || a.month - b.month
   || a.day - b.day
-  || (a.type === b.type ? 0 : a.type === "image" ? -1 : 1)
   || a.addedAt - b.addedAt
+  || (a.type === b.type ? 0 : a.type === "image" ? -1 : 1)
   || a.imageNumber - b.imageNumber
   || a.src.localeCompare(b.src)
 );

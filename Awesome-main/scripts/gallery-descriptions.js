@@ -19,6 +19,8 @@ module.exports = {
   "2026": {
     // Media/file: public/about-me/2026/1.1_20.jpg
     "1.1_20.jpg": {"title":"Floral Design","description":"A delicate floral illustration adds a calm, personal touch to a deep blue background."},
+    // Media/file: public/about-me/2026/10.1_1.jpg
+    "10.1_1.jpg": {"title":"Gallery Photo","description":"A photo from the company gallery."},
     // Media/file: public/about-me/2026/2.1_19.jpg
     "2.1_19.jpg": {"title":"Cloudscape","description":"Soft clouds fill the sky in this gentle, dreamy scene."},
     // Media/file: public/about-me/2026/2.1_19.mp4

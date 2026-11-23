@@ -4348,6 +4348,16 @@
         },
         {
           year: "2026",
+          src: "/about-me/2026/10.1_1.jpg",
+          type: "image",
+          addedAt: 1795454797134.7432,
+          version: "842936-mwtjeg3q",
+          title: "Gallery Photo",
+          description: "A photo from the company gallery.",
+          date: "2026-01-01"
+        },
+        {
+          year: "2026",
           src: "/about-me/2026/6.1_2.jpg",
           type: "image",
           addedAt: 1794076877646.4138,
@@ -4717,8 +4727,8 @@
         return Number(a.year) - Number(b.year)
           || aFileParts[0] - bFileParts[0]
           || aFileParts[1] - bFileParts[1]
-          || (a.type === b.type ? 0 : a.type === "image" ? -1 : 1)
           || aAddedAt - bAddedAt
+          || (a.type === b.type ? 0 : a.type === "image" ? -1 : 1)
           || aFileParts[2] - bFileParts[2];
       }
 
