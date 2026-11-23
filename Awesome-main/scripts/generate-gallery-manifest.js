@@ -1,5 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const { formatGalleryDescriptions } = require("./gallery-caption-store");
 
 const galleryRoot = path.join(__dirname, "..", "public", "about-me");
 const manifestPath = path.join(__dirname, "..", "public", "gallery-manifest.json");
@@ -76,18 +77,26 @@ for (const yearFolder of yearFolders) {
     const date = `${yearFolder.name}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const type = imageExtensions.has(file.name.split(".").pop().toLowerCase()) ? "image" : "video";
     const stats = fs.statSync(path.join(yearPath, file.name));
+    const version = `${stats.size}-${Math.trunc(stats.mtimeMs).toString(36)}`;
     const previousAddedAt = previousAddedAtByFile.get(`${yearFolder.name}/${file.name}`);
-    const imageDescription = existingDescriptions[yearFolder.name]?.[file.name] || {
-      title: type === "image" ? "Gallery Photo" : "Gallery Video",
-      description: `A ${type === "image" ? "photo" : "video"} from the company gallery.`
-    };
+    const existingDescription = existingDescriptions[yearFolder.name]?.[file.name];
+    const imageDescription = existingDescription
+      ? {
+          ...existingDescription,
+          mediaVersion: existingDescription.mediaVersion || version
+        }
+      : {
+          title: type === "image" ? "Gallery Photo" : "Gallery Video",
+          description: `A ${type === "image" ? "photo" : "video"} from the company gallery.`
+      };
     yearDescriptions[file.name] = imageDescription;
     galleryItems.push({
       year: yearFolder.name,
       src: `/about-me/${yearFolder.name}/${file.name}`,
       type,
       addedAt: Number.isFinite(previousAddedAt) ? previousAddedAt : stats.ctimeMs,
-      version: `${stats.size}-${Math.trunc(stats.mtimeMs).toString(36)}`,
+      version,
+      captionVersion: imageDescription.mediaVersion || "",
       title: imageDescription.title,
       description: imageDescription.description,
       date,
@@ -109,20 +118,7 @@ galleryItems.sort((a, b) =>
   || a.src.localeCompare(b.src)
 );
 
-const descriptionsSource = [
-  "module.exports = {",
-  ...Object.entries(descriptionsByYear).flatMap(([year, images], yearIndex) => [
-    `  // ===== ${year} =====`,
-    `  ${JSON.stringify(year)}: {`,
-    ...Object.entries(images).flatMap(([fileName, description], imageIndex) => [
-      `    // Media/file: public/about-me/${year}/${fileName}`,
-      `    ${JSON.stringify(fileName)}: ${JSON.stringify(description)}${imageIndex < Object.keys(images).length - 1 ? "," : ""}`
-    ]),
-    `  }${yearIndex < Object.keys(descriptionsByYear).length - 1 ? "," : ""}`
-  ]),
-  "};",
-  ""
-].join("\n");
+const descriptionsSource = formatGalleryDescriptions(descriptionsByYear);
 
 const galleryGroups = Object.entries(galleryItems.reduce((groups, item) => {
   (groups[item.year] ||= []).push(item);
@@ -139,6 +135,7 @@ const galleryItemsSource = [
       `          type: ${JSON.stringify(item.type)},`,
       `          addedAt: ${item.addedAt},`,
       `          version: ${JSON.stringify(item.version)},`,
+      `          captionVersion: ${JSON.stringify(item.captionVersion)},`,
       `          title: ${JSON.stringify(item.title)},`,
       `          description: ${JSON.stringify(item.description)},`,
       `          date: ${JSON.stringify(item.date)}`,

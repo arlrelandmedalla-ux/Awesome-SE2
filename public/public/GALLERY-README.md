@@ -22,7 +22,8 @@ While `npm run dev` is running, newly added media in either folder is detected a
 1. Create a four-digit folder under `public/about-me/`, for example `public/about-me/2027/`.
 2. Add image or video files inside that folder using the required filename format.
 3. While `npm run dev` is running, its watcher rebuilds the gallery manifest automatically. The open website checks for updates every 3 seconds and displays newly added media, switches to its year, and generates a caption.
-4. For deployment, run `npm run build` and deploy the updated media and generated gallery files. A hosted website cannot read files from your local folders, so it updates after the new build is deployed.
+4. After a successful local AI caption request, the caption is saved to `scripts/gallery-descriptions.js` and the shared manifest. This keeps it consistent across browsers and devices; deploy the generated gallery files for the published site to use it too.
+5. For deployment, run `npm run build` and deploy the updated media and generated gallery files. A hosted website cannot read files from your local folders, so it updates after the new build is deployed.
 
 The folder name must match `YYYY`, such as `2027`.
 
@@ -59,7 +60,7 @@ Keep the extension in the actual filename: `11.2_3.jpg` is valid, while `11.2_3`
 
 Use a unique `imageNumber` for each file unless an image and video belong to the same entry.
 
-New media without a custom caption is captioned automatically: images use their visible content, and videos use sampled frames. The AI caption does not include the date shown separately below the media. This requires `GEMINI_API_KEY`; if caption generation fails, the generic gallery caption remains.
+New media without a custom caption is captioned automatically on the local site: images use their visible content, and videos use sampled frames. The caption is stored in the shared descriptions file rather than browser storage, so desktop and mobile display the same saved text. The AI caption does not include the date shown separately below the media. This requires `GEMINI_API_KEY`; if caption generation fails, the generic gallery caption remains until a later local retry succeeds.
 
 ## Changing a caption
 

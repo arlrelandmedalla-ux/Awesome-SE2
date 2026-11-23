@@ -1,6 +1,8 @@
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
+const { saveGalleryCaption } = require("./gallery-caption-store");
 
 const root = path.resolve(__dirname, "..");
 const publicRoot = path.join(root, "public");
@@ -14,10 +16,34 @@ for (const envPath of [path.join(root, ".env"), path.resolve(root, "..", ".env")
 }
 const port = Number(process.env.PORT) || 3000;
 const bodyLimit = 2 * 1024 * 1024;
+const saveGalleryCaptionHandler = async (request, response) => {
+  if (request.method !== "POST") {
+    response.setHeader("Allow", "POST");
+    return response.status(405).json({ error: "Method Not Allowed" });
+  }
+
+  try {
+    const savedCaption = saveGalleryCaption(request.body);
+    const result = spawnSync(process.execPath, [path.join(__dirname, "generate-gallery-manifest.js")], {
+      cwd: root,
+      stdio: "ignore"
+    });
+    if (result.error) throw result.error;
+    if (result.status !== 0) throw new Error(`Gallery manifest generation failed with exit code ${result.status}.`);
+    return response.status(200).json({ saved: true, ...savedCaption });
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    if (statusCode >= 500) console.error("Could not save the shared gallery caption.", error);
+    return response.status(statusCode).json({
+      error: statusCode >= 500 ? "Could not save the shared gallery caption." : error.message
+    });
+  }
+};
 const apiHandlers = new Map([
   ["/api/assistant", require("../api/assistant")],
   ["/api/contact", require("../api/contact")],
-  ["/api/gallery-caption", require("../api/gallery-caption")]
+  ["/api/gallery-caption", require("../api/gallery-caption")],
+  ["/api/gallery-caption/save", saveGalleryCaptionHandler]
 ]);
 const mimeTypes = {
   ".css": "text/css; charset=utf-8",
