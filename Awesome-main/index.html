@@ -2820,6 +2820,14 @@
       animation: none;
     }
 
+    @media (min-width: 761px) {
+      .floating-contact-panel .social-talk-typing {
+        width: 13ch;
+        border-right: 0;
+        animation: none;
+      }
+    }
+
     .social-talk-typing {
       display: inline-block;
       width: 0;
@@ -2847,8 +2855,14 @@
     }
 
     .floating-links {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 10px);
       display: grid;
       gap: 10px;
+      max-height: min(60dvh, 360px);
+      overflow-y: auto;
+      padding: 4px;
       opacity: 0;
       visibility: hidden;
       transform: translateY(10px);
@@ -3063,8 +3077,8 @@
         bottom: max(12px, env(safe-area-inset-bottom));
       }
       .floating-links {
-        right: 12px;
-        bottom: calc(68px + env(safe-area-inset-bottom));
+        right: 0;
+        bottom: calc(100% + 10px);
         max-height: min(60dvh, 360px);
         overflow-y: auto;
         padding: 4px;
