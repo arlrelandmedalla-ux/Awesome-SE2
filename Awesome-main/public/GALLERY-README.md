@@ -57,6 +57,8 @@ The year comes from the folder name. For example, `public/about-me/2026/1.1_20.j
 
 Use a unique `imageNumber` for each file unless an image and video belong to the same entry.
 
+New media without a custom caption is captioned automatically: images use their visible content, and videos use sampled frames. The AI caption does not include the date shown separately below the media. This requires `GEMINI_API_KEY`; if caption generation fails, the generic gallery caption remains.
+
 ## Changing a caption
 
 Edit the exact filename entry in:

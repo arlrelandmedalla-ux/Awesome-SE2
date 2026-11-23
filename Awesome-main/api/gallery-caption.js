@@ -13,7 +13,10 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  const { imageData } = req.body || {};
+  const { imageData, mediaType = "image" } = req.body || {};
+  if (mediaType !== "image" && mediaType !== "video") {
+    return res.status(400).json({ error: "Caption media type must be image or video." });
+  }
   const dataUrlMatch = typeof imageData === "string"
     ? imageData.match(/^data:image\/jpeg;base64,([A-Za-z0-9+/]+={0,2})$/)
     : null;
@@ -63,7 +66,12 @@ module.exports = async (req, res) => {
         parts: [
           {
             text: [
-              "Write a concise gallery caption in English based only on what is visibly present in this image.",
+              mediaType === "video"
+                ? "Write a concise gallery caption in English based only on the visible content in these ordered frames from one video."
+                : "Write a concise gallery caption in English based only on what is visibly present in this image.",
+              ...(mediaType === "video"
+                ? ["Summarize the scene or action across the frames instead of describing the frames individually."]
+                : []),
               "Do not identify people or infer names, ages, private details, exact locations, or events that are not clearly visible.",
               "Do not include dates, years, or times; the gallery displays the media date separately.",
               "Return a short title (up to 6 words) and one sentence description (up to 24 words)."

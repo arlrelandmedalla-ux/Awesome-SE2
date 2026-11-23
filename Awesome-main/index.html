@@ -4905,8 +4905,13 @@
       }
 
       function hasDefaultGalleryCaption(item) {
-        return (item.title === "Gallery Photo" || /^Image \d+$/.test(item.title))
-          && item.description === "A photo from the company gallery.";
+        const isDefaultTitle = item.type === "video"
+          ? item.title === "Gallery Video" || /^Video \d+$/.test(item.title)
+          : item.title === "Gallery Photo" || /^Image \d+$/.test(item.title);
+        const defaultDescription = item.type === "video"
+          ? "A video from the company gallery."
+          : "A photo from the company gallery.";
+        return isDefaultTitle && item.description === defaultDescription;
       }
 
       function blobToDataUrl(blob) {
@@ -4918,6 +4923,91 @@
         });
       }
 
+      function waitForVideoEvent(video, eventName, start) {
+        return new Promise((resolve, reject) => {
+          let timeoutId;
+          const cleanup = () => {
+            window.clearTimeout(timeoutId);
+            video.removeEventListener(eventName, handleReady);
+            video.removeEventListener("error", handleError);
+          };
+          const finish = (error) => {
+            cleanup();
+            if (error) reject(error);
+            else resolve();
+          };
+          const handleReady = () => finish();
+          const handleError = () => finish(new Error("Could not read the video for captioning."));
+          video.addEventListener(eventName, handleReady);
+          video.addEventListener("error", handleError);
+          timeoutId = window.setTimeout(
+            () => finish(new Error("Timed out while reading the video for captioning.")),
+            15000
+          );
+          try {
+            start();
+          } catch (error) {
+            finish(error);
+          }
+        });
+      }
+
+      async function seekVideoTo(video, time) {
+        if (video.readyState >= 2 && Math.abs(video.currentTime - time) < 0.001) return;
+        await waitForVideoEvent(video, "seeked", () => {
+          video.currentTime = time;
+        });
+      }
+
+      async function drawVideoCaptionFrames(videoUrl, canvas) {
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.muted = true;
+        video.playsInline = true;
+        try {
+          await waitForVideoEvent(video, "loadedmetadata", () => {
+            video.src = videoUrl;
+            video.load();
+          });
+          if (!Number.isFinite(video.duration) || !(video.duration > 0) || !video.videoWidth || !video.videoHeight) {
+            throw new Error("The video has no readable frames to caption.");
+          }
+
+          const sampleTimes = video.duration < 0.3
+            ? [0]
+            : [video.duration * 0.1, video.duration * 0.5, video.duration * 0.9]
+              .map((time) => Math.min(time, Math.max(0, video.duration - 0.05)));
+          const frameWidth = 320;
+          const frameHeight = 240;
+          const gap = 8;
+          canvas.width = frameWidth * sampleTimes.length + gap * (sampleTimes.length - 1);
+          canvas.height = frameHeight;
+          const context = canvas.getContext("2d");
+          if (!context) throw new Error("Could not prepare video frames for captioning.");
+          context.fillStyle = "#0b1b2b";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+
+          for (let index = 0; index < sampleTimes.length; index += 1) {
+            const time = sampleTimes[index];
+            if (time === 0 && video.readyState < 2) {
+              await waitForVideoEvent(video, "loadeddata", () => {});
+            } else {
+              await seekVideoTo(video, time);
+            }
+            const scale = Math.min(frameWidth / video.videoWidth, frameHeight / video.videoHeight);
+            const width = Math.round(video.videoWidth * scale);
+            const height = Math.round(video.videoHeight * scale);
+            const x = index * (frameWidth + gap) + Math.round((frameWidth - width) / 2);
+            const y = Math.round((frameHeight - height) / 2);
+            context.drawImage(video, x, y, width, height);
+          }
+        } finally {
+          video.pause();
+          video.removeAttribute("src");
+          video.load();
+        }
+      }
+
       async function generateGalleryCaption(item) {
         const key = getGalleryItemKey(item);
         const requestKey = `${key}|${item.version}`;
@@ -4925,19 +5015,26 @@
         pendingGalleryCaptions.add(requestKey);
 
         try {
-          const imageResponse = await fetch(item.src, { cache: "no-store" });
-          if (!imageResponse.ok) {
-            throw new Error(`Could not load image for captioning (HTTP ${imageResponse.status}).`);
-          }
-          const bitmap = await createImageBitmap(await imageResponse.blob());
-          const scale = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height));
           const canvas = document.createElement("canvas");
-          canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-          canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-          const context = canvas.getContext("2d");
-          if (!context) throw new Error("Could not prepare the image for captioning.");
-          context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-          bitmap.close();
+          if (item.type === "video") {
+            await drawVideoCaptionFrames(item.src, canvas);
+          } else {
+            const imageResponse = await fetch(item.src, { cache: "no-store" });
+            if (!imageResponse.ok) {
+              throw new Error(`Could not load image for captioning (HTTP ${imageResponse.status}).`);
+            }
+            const bitmap = await createImageBitmap(await imageResponse.blob());
+            try {
+              const scale = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height));
+              canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+              canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+              const context = canvas.getContext("2d");
+              if (!context) throw new Error("Could not prepare the image for captioning.");
+              context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+            } finally {
+              bitmap.close();
+            }
+          }
 
           let jpegBlob;
           for (const quality of [0.8, 0.65, 0.5]) {
@@ -4951,7 +5048,7 @@
           const response = await fetch(new URL("api/gallery-caption", document.baseURI), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ imageData })
+            body: JSON.stringify({ imageData, mediaType: item.type })
           });
           const result = await response.json();
           if (!response.ok) throw new Error(result.error || `Caption service failed (HTTP ${response.status}).`);
@@ -5161,7 +5258,7 @@
             updatedItem.captionStatus = "suggested";
           }
 
-          if (item.type === "image" && item.version && (imageChanged || hasDefaultGalleryCaption(updatedItem))) {
+          if (item.version && (imageChanged || hasDefaultGalleryCaption(updatedItem))) {
             updatedItem.captionStatus = "pending";
             captionsToGenerate.push(updatedItem);
           }
