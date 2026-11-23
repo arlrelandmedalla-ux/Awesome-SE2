@@ -5275,7 +5275,10 @@
         });
       });
       function closeGalleryDatePickerOnOutsideInteraction(event) {
-        if (!galleryDatePicker.contains(event.target)) {
+        if (
+          !galleryDatePanel.hidden
+          && !(event.target instanceof Node && galleryDatePicker.contains(event.target))
+        ) {
           galleryYearSuggestions.hidden = true;
           setGalleryDatePickerOpen(false);
         }
@@ -5283,6 +5286,7 @@
       document.addEventListener("pointerdown", closeGalleryDatePickerOnOutsideInteraction, { capture: true });
       document.addEventListener("touchstart", closeGalleryDatePickerOnOutsideInteraction, { capture: true, passive: true });
       document.addEventListener("click", closeGalleryDatePickerOnOutsideInteraction);
+      window.addEventListener("scroll", closeGalleryDatePickerOnOutsideInteraction, { passive: true });
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           if (!galleryYearSuggestions.hidden) {
