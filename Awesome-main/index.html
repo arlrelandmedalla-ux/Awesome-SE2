@@ -4034,19 +4034,35 @@
     const floatingContactPanel = document.getElementById("floatingContactPanel");
 
     document.addEventListener("click", (event) => {
-      if (!(event.target instanceof Element) || !event.target.closest('a[href^="viber://"]')) return;
+      if (
+        !(event.target instanceof Element)
+        || event.button !== 0
+        || event.metaKey
+        || event.ctrlKey
+        || event.shiftKey
+        || event.altKey
+      ) return;
+
+      const viberLink = event.target.closest('a[href^="viber://"]');
+      if (!viberLink) return;
+
+      event.preventDefault();
+      const viberTab = window.open("about:blank", "_blank");
+      if (!viberTab) {
+        window.location.assign("https://www.viber.com/download/");
+        return;
+      }
 
       const fallbackTimer = window.setTimeout(() => {
-        if (document.visibilityState === "visible") {
-          window.location.assign("https://www.viber.com/download/");
+        if (!viberTab.closed) {
+          viberTab.location.replace("https://www.viber.com/download/");
         }
-      }, 1600);
-      const cancelFallback = () => window.clearTimeout(fallbackTimer);
-
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "hidden") cancelFallback();
+      }, 1800);
+      viberTab.addEventListener("blur", () => {
+        window.clearTimeout(fallbackTimer);
+        viberTab.close();
       }, { once: true });
-      window.addEventListener("blur", cancelFallback, { once: true });
+      viberTab.location.href = viberLink.href;
     });
 
     if (talkToUsToggle && floatingContactPanel) {
