@@ -27,6 +27,12 @@ module.exports = {
     "12.2_2.jpg": {"title":"Sunlight Through Red Leaves","description":"Sunlight breaks through a broad red maple canopy above a mossy slope and scattered rocks.","mediaVersion":"683139-mw56rxio"},
     // Media/file: public/about-me/2026/13.2_4.jpeg
     "13.2_4.jpeg": {"title":"Conference Room Presentation","description":"Colleagues gather around a large table while two presenters speak beside a projected slide and wall display.","mediaVersion":"504122-mwtl3re3"},
+    // Media/file: public/about-me/2026/14.12_1.jpg
+    "14.12_1.jpg": {"title":"Forest View Through Windows","description":"Tall pine trees and a grassy clearing are framed by vertical window panes. A distant, wooded mountain slope rises under a clear sky.","mediaVersion":"835382-mwto1oan"},
+    // Media/file: public/about-me/2026/14.6_24.jpg
+    "14.6_24.jpg": {"title":"Vibrant Purple Desert Landscape Painting","description":"An oil painting of a desert landscape featuring jagged mountains in the background and a large tree with vivid purple foliage in the foreground. Dark, shadowy boulders frame the lower right corner while pink hues wash over the ground.","mediaVersion":"445629-mwtx43f8"},
+    // Media/file: public/about-me/2026/15.6_1.jpg
+    "15.6_1.jpg": {"title":"Waterfall Amidst Autumn Foliage and Mountains","description":"A tiered waterfall cascades over grey rocks into a rushing turquoise river. Bright orange and yellow autumn trees frame the right side of the scene beneath distant mountain peaks.","mediaVersion":"710761-mwty3jn9"},
     // Media/file: public/about-me/2026/2.1_19.jpg
     "2.1_19.jpg": {"title":"Cloudscape","description":"Soft clouds fill the sky in this gentle, dreamy scene.","mediaVersion":"12204443-mw544ye4"},
     // Media/file: public/about-me/2026/2.1_19.mp4

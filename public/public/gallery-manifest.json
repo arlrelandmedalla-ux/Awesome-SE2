@@ -292,5 +292,47 @@
     "month": 5,
     "day": 1,
     "imageNumber": 5
+  },
+  {
+    "year": "2026",
+    "src": "/about-me/2026/15.6_1.jpg",
+    "type": "image",
+    "addedAt": 1795479524173.2268,
+    "version": "710761-mwty3jn9",
+    "captionVersion": "710761-mwty3jn9",
+    "title": "Waterfall Amidst Autumn Foliage and Mountains",
+    "description": "A tiered waterfall cascades over grey rocks into a rushing turquoise river. Bright orange and yellow autumn trees frame the right side of the scene beneath distant mountain peaks.",
+    "date": "2026-06-01",
+    "month": 6,
+    "day": 1,
+    "imageNumber": 15
+  },
+  {
+    "year": "2026",
+    "src": "/about-me/2026/14.6_24.jpg",
+    "type": "image",
+    "addedAt": 1795477882856.7373,
+    "version": "445629-mwtx43f8",
+    "captionVersion": "445629-mwtx43f8",
+    "title": "Vibrant Purple Desert Landscape Painting",
+    "description": "An oil painting of a desert landscape featuring jagged mountains in the background and a large tree with vivid purple foliage in the foreground. Dark, shadowy boulders frame the lower right corner while pink hues wash over the ground.",
+    "date": "2026-06-24",
+    "month": 6,
+    "day": 24,
+    "imageNumber": 14
+  },
+  {
+    "year": "2026",
+    "src": "/about-me/2026/14.12_1.jpg",
+    "type": "image",
+    "addedAt": 1795463042463.8945,
+    "version": "835382-mwto1oan",
+    "captionVersion": "835382-mwto1oan",
+    "title": "Forest View Through Windows",
+    "description": "Tall pine trees and a grassy clearing are framed by vertical window panes. A distant, wooded mountain slope rises under a clear sky.",
+    "date": "2026-12-01",
+    "month": 12,
+    "day": 1,
+    "imageNumber": 14
   }
 ]
