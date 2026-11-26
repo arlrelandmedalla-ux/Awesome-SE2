@@ -2,10 +2,7 @@ const { GoogleGenAI, Type } = require("@google/genai");
 const generateContentWithTimeout = require("../scripts/gemini-request");
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
-const GEMINI_TRANSCRIPTION_MODEL = process.env.GEMINI_TRANSCRIPTION_MODEL || "gemini-3.5-transcribe";
 const GEMINI_TRANSLATION_MODEL = process.env.GEMINI_TRANSLATION_MODEL || GEMINI_MODEL;
-const MAX_TRANSCRIPTION_AUDIO_BYTES = 1300000;
-const SUPPORTED_AUDIO_MIME_TYPES = new Set(["audio/webm", "audio/mp4", "audio/m4a", "audio/ogg", "audio/wav", "audio/mpeg", "audio/aac"]);
 const TRANSLATION_CACHE_TTL_MS = 5 * 60 * 1000;
 const TRANSLATION_CACHE_MAX_ENTRIES = 128;
 const translationCache = new Map();
@@ -106,11 +103,11 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  const { action = "answer", serviceId, question, language, history, text, sourceLanguage, websiteContext, audio, mimeType } = req.body || {};
+  const { action = "answer", serviceId, question, language, history, text, sourceLanguage, websiteContext } = req.body || {};
   if (!SERVICES[serviceId]) {
     return res.status(400).json({ error: "Choose a valid service before asking a question." });
   }
-  if (!["answer", "explain", "translate", "transcribe"].includes(action)) {
+  if (!["answer", "explain", "translate"].includes(action)) {
     return res.status(400).json({ error: "Choose a valid assistant action." });
   }
   if (action === "translate") {
@@ -126,21 +123,6 @@ module.exports = async (req, res) => {
     }
     if (history !== undefined && (!Array.isArray(history) || history.length > 8)) {
       return res.status(400).json({ error: "Conversation history is invalid." });
-    }
-  } else if (action === "transcribe") {
-    if (
-      typeof audio !== "string" ||
-      !audio ||
-      audio.length > Math.ceil(MAX_TRANSCRIPTION_AUDIO_BYTES / 3) * 4 ||
-      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(audio) ||
-      typeof mimeType !== "string" ||
-      !SUPPORTED_AUDIO_MIME_TYPES.has(mimeType)
-    ) {
-      return res.status(400).json({ error: "The recording format is invalid or unsupported." });
-    }
-    const audioSize = Buffer.from(audio, "base64").length;
-    if (!audioSize || audioSize > MAX_TRANSCRIPTION_AUDIO_BYTES) {
-      return res.status(413).json({ error: "The recording is too large. Please record a shorter question." });
     }
   }
   if (
@@ -185,7 +167,6 @@ module.exports = async (req, res) => {
     const client = new GoogleGenAI({
       apiKey,
       httpOptions: {
-        apiVersion: "v1beta",
         timeout: 55000,
         retryOptions: { attempts: 1 }
       }
@@ -195,21 +176,6 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         translation,
         language: sourceLanguage === "tl" ? "en" : "tl",
-      });
-    }
-    if (action === "transcribe") {
-      const result = await client.interactions.create({
-        model: GEMINI_TRANSCRIPTION_MODEL,
-        input: [{ type: "audio", data: audio, mime_type: mimeType }],
-        generationConfig: {
-          transcriptionConfig: {
-            languageCodes: [],
-            mode: { type: "verbatim" }
-          }
-        }
-      }, { timeout: 55000 });
-      return res.status(200).json({
-        transcript: typeof result.output_text === "string" ? result.output_text.trim() : ""
       });
     }
 
@@ -295,18 +261,13 @@ module.exports = async (req, res) => {
     const errorCode = String(error?.code || error?.error?.code || "");
     const statusCode = Number(error?.status || error?.statusCode || error?.response?.status);
     const normalizedError = `${errorCode} ${errorMessage}`.toLowerCase();
-    const timedOut = error.code === "GEMINI_TIMEOUT" || /timeout|timed out|continuationinterrupted/i.test(`${error?.name || ""} ${normalizedError}`);
     console.error("Gemini assistant request failed.", {
       status: statusCode || undefined,
       code: errorCode || undefined,
       message: errorMessage || "Unknown Gemini error."
     });
-    if (timedOut) {
-      return res.status(504).json({
-        error: action === "transcribe"
-          ? "Transcription timed out. Please try a shorter recording."
-          : "The AI request timed out. Please try again."
-      });
+    if (error.code === "GEMINI_TIMEOUT") {
+      return res.status(504).json({ error: "The AI request timed out. Please try again." });
     }
     if (statusCode === 503 || statusCode === 504) {
       return res.status(503).json({ error: "Gemini is temporarily unavailable. Please try again in a moment." });
@@ -320,10 +281,6 @@ module.exports = async (req, res) => {
     if (statusCode === 429 || /quota|rate.?limit|resource.?exhausted|too many requests/.test(normalizedError)) {
       return res.status(503).json({ error: "The Gemini request quota is currently unavailable. Please try again later." });
     }
-    return res.status(502).json({
-      error: action === "transcribe"
-        ? "Could not transcribe the recording. Please try again or type your question."
-        : "The assistant could not answer right now. Please try again or contact our team."
-    });
+    return res.status(502).json({ error: "The assistant could not answer right now. Please try again or contact our team." });
   }
 };
