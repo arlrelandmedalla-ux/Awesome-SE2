@@ -6350,7 +6350,12 @@
         manualStopRequested = true;
         clearListeningPrompt();
         if (recognition && listening) {
-          recognition.stop();
+          try {
+            recognition.stop();
+          } catch (error) {
+            finishListening();
+            status.textContent = "Could not stop speech recognition. Your captured words are ready; please try again.";
+          }
         } else {
           finishListening();
         }
@@ -6420,6 +6425,7 @@
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.onresult = (event) => {
+          if (!listening || discardTranscriptOnEnd) return;
           const finalized = [];
           const interim = [];
           for (let index = event.resultIndex; index < event.results.length; index += 1) {
@@ -6448,13 +6454,15 @@
             : `Speech recognition error: ${event.error}. You can type your question instead.`;
         };
         recognition.onend = () => {
+          if (!listening) return;
           if (listening && !manualStopRequested) {
             window.setTimeout(() => {
               if (!listening || manualStopRequested) return;
               try {
                 recognition.start();
               } catch (error) {
-                status.textContent = "Could not continue speech recognition. Click the microphone to try again.";
+                finishListening();
+                status.textContent = "Could not continue speech recognition. Your captured words are ready; click the microphone to try again.";
               }
             }, 50);
             return;
@@ -6483,8 +6491,7 @@
             status.textContent = "Recording... click the microphone again to finish.";
             startListeningPrompt();
           } catch (error) {
-            listening = false;
-            listenButton.classList.remove("is-listening");
+            finishListening();
             status.textContent = "Could not start speech recognition. Please try again or type your question.";
           }
         });
@@ -6504,6 +6511,10 @@
           return;
         }
 
+        if (listening) {
+          transcriptBase = "";
+          stopListening(true);
+        }
         addMessage("user", question);
         conversation.push({ role: "user", text: question });
         questionInput.value = "";
