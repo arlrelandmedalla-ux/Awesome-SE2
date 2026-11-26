@@ -5510,6 +5510,7 @@
       const conversation = [];
       let activeService = null;
       let recognition = null;
+      let recognitionLanguage = "fil-PH";
       let listening = false;
       let finalizedTranscript = "";
       let pendingTranscript = "";
@@ -6480,7 +6481,7 @@
           transcriptBase = questionInput.value.trim();
           discardTranscriptOnEnd = false;
           manualStopRequested = false;
-          recognition.lang = lastResponseLanguage === "tl" ? "fil-PH" : "en-PH";
+          recognition.lang = recognitionLanguage;
           try {
             recognition.start();
             listening = true;
@@ -6528,6 +6529,7 @@
           if (localAnswer) {
             conversation.push({ role: "assistant", text: localAnswer.answer });
             lastResponseLanguage = localAnswer.language;
+            recognitionLanguage = localAnswer.language === "tl" ? "fil-PH" : "en-PH";
             const message = addMessage("assistant", localAnswer.answer, { language: localAnswer.language });
             if (isContactQuestion(question)) {
               message.classList.add("voice-message-contact");
@@ -6574,6 +6576,7 @@
 
           conversation.push({ role: "assistant", text: data.answer });
           lastResponseLanguage = data.language;
+          recognitionLanguage = data.language === "tl" ? "fil-PH" : "en-PH";
           addMessage("assistant", data.answer, { language: data.language, escalate: data.escalate });
           status.textContent = data.escalate
             ? "This question may need staff review."
@@ -6582,6 +6585,7 @@
           if (requestVersion !== conversationVersion) return;
           status.textContent = error.message || "Unable to reach the assistant. Please try again.";
           const errorLanguage = detectQuestionLanguage(question);
+          recognitionLanguage = errorLanguage === "tl" ? "fil-PH" : "en-PH";
           const fallbackAnswer = errorLanguage === "tl"
             ? "Hindi ko makuha ang sagot mula sa AI sa ngayon. Subukan ulit mamaya o makipag-ugnayan sa aming team para matulungan ka."
             : "I couldn't get an answer from the AI right now. Please try again later or contact our team for help.";
