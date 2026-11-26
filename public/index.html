@@ -4115,7 +4115,7 @@
     <div id="voiceLog" class="voice-log" role="log" aria-live="polite" hidden></div>
     <p id="voiceStatus" class="voice-status" role="status" aria-live="polite"></p>
     <form id="voiceForm" class="voice-compose" hidden>
-      <textarea id="voiceQuestion" rows="1" maxlength="1000" placeholder="Ask a follow-up question..." aria-label="Your question" autocomplete="off" autocorrect="on" autocapitalize="sentences" enterkeyhint="send" inputmode="text" required></textarea>
+      <textarea id="voiceQuestion" rows="1" maxlength="1000" placeholder="Ask a follow-up question..." aria-label="Your question" autocomplete="off" autocorrect="on" autocapitalize="sentences" enterkeyhint="send" inputmode="text"></textarea>
       <button id="voiceListen" type="button" aria-label="Start voice input" title="Speak your question" hidden>
         <svg class="voice-mic-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-3.07A7 7 0 0 0 19 11h-2Z" fill="currentColor"/></svg>
         <span class="voice-wave" aria-hidden="true"><span></span><span></span><span></span></span>
@@ -5504,18 +5504,18 @@
       const questionInput = document.getElementById("voiceQuestion");
       const sendButton = document.getElementById("voiceSend");
       const visualViewport = window.visualViewport;
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const canRecordAudio = Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
+      const maxRecordingBytes = 1300000;
       const assistantApiUrl = new URL("api/assistant", document.baseURI);
       const assistantRequestTimeoutMs = 25000;
       const conversation = [];
       let activeService = null;
-      let recognition = null;
-      let recognitionLanguage = "fil-PH";
+      let mediaRecorder = null;
+      let recordingStream = null;
+      let recordingVersion = 0;
       let listening = false;
-      let finalizedTranscript = "";
-      let pendingTranscript = "";
-      let discardTranscriptOnEnd = false;
-      let manualStopRequested = false;
+      let transcribing = false;
+      let sendAfterTranscription = false;
       let transcriptBase = "";
       let busy = false;
       let activeSpeechButton = null;
@@ -5577,12 +5577,12 @@
 
       questionInput.addEventListener("input", () => {
         resizeQuestionInput();
-        if (listening) {
+        if (listening || transcribing) {
           transcriptBase = questionInput.value.trim();
-          finalizedTranscript = "";
-          pendingTranscript = "";
           listeningPromptIndex = 0;
-          status.textContent = "Recording... newly spoken words will be added after your edit.";
+          status.textContent = listening
+            ? "Recording... your typed text will be kept with the transcription."
+            : "Transcribing... your edit will be kept with the transcription.";
         }
       });
       questionInput.addEventListener("focus", () => {
@@ -5614,13 +5614,13 @@
         if (message) status.textContent = message;
       }
 
-      async function requestAssistant(payload) {
+      async function requestAssistant(payload, timeoutMs = assistantRequestTimeoutMs) {
         if (window.location.protocol === "file:") {
           throw new Error("Hindi gumagana ang AI at translator kapag binuksan ang index.html bilang file. Buksan ang deployed Vercel site o patakbuhin ang npm run dev sa project folder.");
         }
 
         const controller = new AbortController();
-        const timeout = window.setTimeout(() => controller.abort(), assistantRequestTimeoutMs);
+        const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
         try {
           const response = await fetch(assistantApiUrl, {
             method: "POST",
@@ -5685,7 +5685,7 @@
       function setBusy(value) {
         busy = value;
         sendButton.disabled = value;
-        listenButton.disabled = value || !SpeechRecognition;
+        listenButton.disabled = value || !canRecordAudio;
         [...tabs.children].forEach((tab) => {
           tab.disabled = value;
         });
@@ -6255,9 +6255,9 @@
         form.hidden = true;
         listenButton.hidden = true;
         tabs.querySelector("button")?.focus({ preventScroll: true });
-        status.textContent = SpeechRecognition
+        status.textContent = canRecordAudio
           ? "Choose a service to start a conversation."
-          : "Speech recognition is not supported in this browser. You can type questions.";
+          : "Audio recording is not supported in this browser. You can type questions.";
       }
 
       services.forEach((service) => {
@@ -6280,7 +6280,7 @@
         busy = false;
         sendButton.disabled = false;
         questionInput.disabled = false;
-        listenButton.disabled = !SpeechRecognition;
+        listenButton.disabled = !canRecordAudio;
         questionInput.value = "";
         resizeQuestionInput();
         [...tabs.children].forEach((tab) => {
@@ -6289,9 +6289,9 @@
         log.replaceChildren();
         [...tabs.children].forEach((tab) => tab.setAttribute("aria-pressed", "false"));
         showServicePicker();
-        status.textContent = SpeechRecognition
+        status.textContent = canRecordAudio
           ? "Choose a service to start a conversation."
-          : "Speech recognition is not supported in this browser. You can type questions.";
+          : "Audio recording is not supported in this browser. You can type questions.";
         setOpen(false);
         launcher.focus();
       });
@@ -6347,18 +6347,35 @@
       document.addEventListener("wheel", closeOverlaysOnPageScroll, { capture: true, passive: true });
       document.addEventListener("touchmove", closeOverlaysOnPageScroll, { capture: true, passive: true });
       function stopListening(discard = false) {
-        discardTranscriptOnEnd = discard;
-        manualStopRequested = true;
         clearListeningPrompt();
-        if (recognition && listening) {
-          try {
-            recognition.stop();
-          } catch (error) {
-            finishListening();
-            status.textContent = "Could not stop speech recognition. Your captured words are ready; please try again.";
+        if (discard) {
+          sendAfterTranscription = false;
+          recordingVersion += 1;
+          listening = false;
+          if (transcribing) {
+            transcribing = false;
+            setBusy(false);
+          }
+        }
+        if (mediaRecorder) {
+          if (mediaRecorder.state !== "inactive") {
+            try {
+              mediaRecorder.stop();
+            } catch (error) {
+              recordingVersion += 1;
+              listening = false;
+              recordingStream?.getTracks().forEach((track) => track.stop());
+              recordingStream = null;
+              mediaRecorder = null;
+              status.textContent = "Could not stop the recording. Please try again.";
+            }
           }
         } else {
-          finishListening();
+          if (listening) recordingVersion += 1;
+          listening = false;
+          recordingStream?.getTracks().forEach((track) => track.stop());
+          recordingStream = null;
+          if (!discard) status.textContent = "Recording stopped before it was ready. Please try again.";
         }
         listenButton.classList.remove("is-listening");
         listenButton.setAttribute("aria-pressed", "false");
@@ -6388,134 +6405,201 @@
         }, 10000);
       }
 
-      function finishListening() {
+      function resetListenButton() {
         clearListeningPrompt();
-        const transcript = pendingTranscript.trim();
-        const shouldDiscard = discardTranscriptOnEnd;
-        if (!shouldDiscard) {
-          questionInput.value = [transcriptBase, transcript].filter(Boolean).join(" ");
-          resizeQuestionInput();
-          focusQuestionInput();
-        }
-        if (shouldDiscard) {
-          questionInput.value = transcriptBase;
-          resizeQuestionInput();
-        }
-        if (!shouldDiscard && !transcript) {
-          questionInput.value = transcriptBase;
-          resizeQuestionInput();
-          status.textContent = "Please try again. We couldn't clearly hear your recording.";
-        }
-        pendingTranscript = "";
-        finalizedTranscript = "";
-        transcriptBase = "";
-        discardTranscriptOnEnd = false;
-        manualStopRequested = false;
-        listening = false;
         listenButton.classList.remove("is-listening");
         listenButton.setAttribute("aria-pressed", "false");
         listenButton.setAttribute("aria-label", "Start voice input");
         listenButton.title = "Speak your question";
-        if (!shouldDiscard && transcript) {
-          status.textContent = "Recording finished. Review your question before sending.";
+      }
+
+      function arrayBufferToBase64(buffer) {
+        const bytes = new Uint8Array(buffer);
+        const chunkSize = 0x8000;
+        let binary = "";
+        for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+          binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
         }
+        return window.btoa(binary);
       }
 
-      if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.onresult = (event) => {
-          if (!listening || discardTranscriptOnEnd) return;
-          const finalized = [];
-          const interim = [];
-          for (let index = event.resultIndex; index < event.results.length; index += 1) {
-            const result = event.results[index];
-            if (result.isFinal) finalized.push(result[0].transcript);
-            else interim.push(result[0].transcript);
-          }
-          finalizedTranscript = [finalizedTranscript, finalized.join(" ")]
-            .filter(Boolean)
-            .join(" ")
-            .trim();
-          pendingTranscript = [finalizedTranscript, interim.join(" ")]
-            .filter(Boolean)
-            .join(" ")
-            .trim();
-          questionInput.value = [transcriptBase, pendingTranscript].filter(Boolean).join(" ");
-          resizeQuestionInput();
-          status.textContent = "Recording... click the microphone again to finish.";
-        };
-        recognition.onerror = (event) => {
-          if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-            manualStopRequested = true;
-          }
-          status.textContent = event.error === "not-allowed"
-            ? "Microphone access was denied. Allow microphone access or type your question."
-            : `Speech recognition error: ${event.error}. You can type your question instead.`;
-        };
-        recognition.onend = () => {
-          if (!listening) return;
-          if (listening && !manualStopRequested) {
-            window.setTimeout(() => {
-              if (!listening || manualStopRequested) return;
-              try {
-                recognition.start();
-              } catch (error) {
-                finishListening();
-                status.textContent = "Could not continue speech recognition. Your captured words are ready; click the microphone to try again.";
-              }
-            }, 50);
-            return;
-          }
-          finishListening();
-        };
-        listenButton.addEventListener("click", () => {
-          if (listening) {
-            discardTranscriptOnEnd = false;
-            stopListening();
-            return;
-          }
-          pendingTranscript = "";
-          finalizedTranscript = "";
-          transcriptBase = questionInput.value.trim();
-          discardTranscriptOnEnd = false;
-          manualStopRequested = false;
-          recognition.lang = recognitionLanguage;
-          try {
-            recognition.start();
-            listening = true;
-            listenButton.classList.add("is-listening");
-            listenButton.setAttribute("aria-pressed", "true");
-            listenButton.setAttribute("aria-label", "Stop recording");
-            listenButton.title = "Stop recording";
-            status.textContent = "Recording... click the microphone again to finish.";
-            startListeningPrompt();
-          } catch (error) {
-            finishListening();
-            status.textContent = "Could not start speech recognition. Please try again or type your question.";
-          }
-        });
-      } else {
-        listenButton.disabled = true;
-        listenButton.title = "Speech recognition is not available in this browser.";
-      }
-      status.textContent = SpeechRecognition
-        ? "Choose a service to start a conversation."
-        : "Speech recognition is not supported in this browser. You can type questions.";
-
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const question = questionInput.value.trim();
-        if (!question || !activeService || busy) {
-          if (!activeService) status.textContent = "Choose a service tab before asking a question.";
+      async function transcribeRecording(recordingId, chunks, mimeType, tooLarge, failed) {
+        if (recordingId !== recordingVersion) return;
+        listening = false;
+        resetListenButton();
+        if (failed) {
+          sendAfterTranscription = false;
+          status.textContent = "There was a microphone recording error. Please try again.";
+          return;
+        }
+        if (tooLarge) {
+          sendAfterTranscription = false;
+          status.textContent = "That recording is too long. Please record a shorter question.";
           return;
         }
 
-        if (listening) {
-          transcriptBase = "";
-          stopListening(true);
+        const blob = new Blob(chunks, { type: mimeType });
+        if (!blob.size) {
+          sendAfterTranscription = false;
+          status.textContent = "We couldn't hear a recording. Please try again.";
+          return;
         }
+
+        transcribing = true;
+        setBusy(true);
+        status.textContent = "Transcribing your recording...";
+        let submitWhenReady = false;
+        try {
+          const recordedMimeType = (mimeType || blob.type).split(";")[0].toLowerCase();
+          const normalizedMimeType = ["audio/x-m4a", "audio/mp4"].includes(recordedMimeType)
+            ? "audio/m4a"
+            : recordedMimeType;
+          const audio = arrayBufferToBase64(await blob.arrayBuffer());
+          const response = await requestAssistant({
+            action: "transcribe",
+            serviceId: activeService.id,
+            audio,
+            mimeType: normalizedMimeType
+          }, 60000);
+          const data = await readAssistantResponse(response, "Could not transcribe the recording");
+          if (recordingId !== recordingVersion) return;
+          if (!response.ok) throw new Error(data.error || "Could not transcribe the recording.");
+          const transcript = typeof data.transcript === "string" ? data.transcript.trim() : "";
+          if (!transcript) {
+            sendAfterTranscription = false;
+            status.textContent = "We couldn't clearly hear your recording. Please try again.";
+            return;
+          }
+          const question = [transcriptBase, transcript].filter(Boolean).join(" ");
+          if (question.length > 1000) {
+            sendAfterTranscription = false;
+            status.textContent = "The transcription is too long. Please record a shorter question.";
+            return;
+          }
+          questionInput.value = question;
+          submitWhenReady = sendAfterTranscription;
+          sendAfterTranscription = false;
+          resizeQuestionInput();
+          focusQuestionInput();
+          status.textContent = "Transcription finished. Review your question before sending.";
+        } catch (error) {
+          if (recordingId === recordingVersion) {
+            sendAfterTranscription = false;
+            status.textContent = error.message || "Could not transcribe the recording. Please type your question instead.";
+          }
+        } finally {
+          if (recordingId === recordingVersion) {
+            transcribing = false;
+            setBusy(false);
+            if (submitWhenReady) form.requestSubmit();
+          }
+        }
+      }
+
+      async function startListening() {
+        const recordingId = ++recordingVersion;
+        sendAfterTranscription = false;
+        transcriptBase = questionInput.value.trim();
+        const chunks = [];
+        let recordingSize = 0;
+        let tooLarge = false;
+        let failed = false;
+        listening = true;
+        listenButton.classList.add("is-listening");
+        listenButton.setAttribute("aria-pressed", "true");
+        listenButton.setAttribute("aria-label", "Stop recording");
+        listenButton.title = "Stop recording";
+        status.textContent = "Requesting microphone access...";
+
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          if (recordingId !== recordingVersion) {
+            stream.getTracks().forEach((track) => track.stop());
+            return;
+          }
+          const supportedMimeType = [
+            "audio/webm;codecs=opus",
+            "audio/webm",
+            "audio/mp4",
+            "audio/ogg;codecs=opus",
+            "audio/ogg"
+          ].find((type) => MediaRecorder.isTypeSupported?.(type));
+          const recorder = new MediaRecorder(stream, supportedMimeType ? { mimeType: supportedMimeType } : undefined);
+          mediaRecorder = recorder;
+          recordingStream = stream;
+          recorder.addEventListener("dataavailable", (event) => {
+            if (!event.data.size) return;
+            recordingSize += event.data.size;
+            if (recordingSize > maxRecordingBytes) {
+              tooLarge = true;
+              status.textContent = "That recording is too long. Stopping now...";
+              if (recorder.state === "recording") recorder.stop();
+              return;
+            }
+            chunks.push(event.data);
+          });
+          recorder.addEventListener("error", () => {
+            failed = true;
+            status.textContent = "There was a microphone recording error. Please try again.";
+            if (recorder.state === "recording") recorder.stop();
+          });
+          recorder.addEventListener("stop", () => {
+            stream.getTracks().forEach((track) => track.stop());
+            if (recordingStream === stream) recordingStream = null;
+            if (mediaRecorder === recorder) mediaRecorder = null;
+            void transcribeRecording(
+              recordingId,
+              chunks,
+              recorder.mimeType,
+              tooLarge,
+              failed
+            );
+          });
+          recorder.start(250);
+          status.textContent = "Recording... click the microphone again to finish.";
+          startListeningPrompt();
+        } catch (error) {
+          stream?.getTracks().forEach((track) => track.stop());
+          if (recordingId !== recordingVersion) return;
+          listening = false;
+          resetListenButton();
+          status.textContent = error.name === "NotAllowedError" || error.name === "SecurityError"
+            ? "Microphone access was denied. Allow microphone access or type your question."
+            : "Could not start microphone recording. Please try again or type your question.";
+        }
+      }
+
+      if (canRecordAudio) {
+        listenButton.addEventListener("click", () => {
+          if (listening) {
+            stopListening();
+            return;
+          }
+          void startListening();
+        });
+      } else {
+        listenButton.disabled = true;
+        listenButton.title = "Audio recording is not available in this browser.";
+      }
+      status.textContent = canRecordAudio
+        ? "Choose a service to start a conversation."
+        : "Audio recording is not supported in this browser. You can type questions.";
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (listening) {
+          sendAfterTranscription = true;
+          stopListening();
+          return;
+        }
+        const question = questionInput.value.trim();
+        if (!question || !activeService || busy) {
+          if (!activeService) status.textContent = "Choose a service tab before asking a question.";
+          else if (!question) status.textContent = "Type or record a question first.";
+          return;
+        }
+
         addMessage("user", question);
         conversation.push({ role: "user", text: question });
         questionInput.value = "";
@@ -6529,7 +6613,6 @@
           if (localAnswer) {
             conversation.push({ role: "assistant", text: localAnswer.answer });
             lastResponseLanguage = localAnswer.language;
-            recognitionLanguage = localAnswer.language === "tl" ? "fil-PH" : "en-PH";
             const message = addMessage("assistant", localAnswer.answer, { language: localAnswer.language });
             if (isContactQuestion(question)) {
               message.classList.add("voice-message-contact");
@@ -6576,7 +6659,6 @@
 
           conversation.push({ role: "assistant", text: data.answer });
           lastResponseLanguage = data.language;
-          recognitionLanguage = data.language === "tl" ? "fil-PH" : "en-PH";
           addMessage("assistant", data.answer, { language: data.language, escalate: data.escalate });
           status.textContent = data.escalate
             ? "This question may need staff review."
@@ -6585,7 +6667,6 @@
           if (requestVersion !== conversationVersion) return;
           status.textContent = error.message || "Unable to reach the assistant. Please try again.";
           const errorLanguage = detectQuestionLanguage(question);
-          recognitionLanguage = errorLanguage === "tl" ? "fil-PH" : "en-PH";
           const fallbackAnswer = errorLanguage === "tl"
             ? "Hindi ko makuha ang sagot mula sa AI sa ngayon. Subukan ulit mamaya o makipag-ugnayan sa aming team para matulungan ka."
             : "I couldn't get an answer from the AI right now. Please try again later or contact our team for help.";
