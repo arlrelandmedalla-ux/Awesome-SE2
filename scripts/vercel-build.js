@@ -23,4 +23,16 @@ fs.cpSync(path.join(siteRoot, "public"), path.join(outputRoot, "public"), {
   force: true
 });
 
+if (process.env.VERCEL_ENV === "production") {
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    execFileSync(
+      process.execPath,
+      [path.join(siteRoot, "scripts", "publish-gallery.js")],
+      { cwd: siteRoot, stdio: "inherit" }
+    );
+  } else {
+    console.warn("BLOB_READ_WRITE_TOKEN is not set; the live gallery manifest was not published.");
+  }
+}
+
 console.log("Prepared Vercel static output in public/.");

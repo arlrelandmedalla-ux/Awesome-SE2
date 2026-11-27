@@ -3,6 +3,7 @@ const http = require("node:http");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { saveGalleryCaption } = require("./gallery-caption-store");
+const { publishGalleryManifest } = require("./gallery-blob-store");
 
 const root = path.resolve(__dirname, "..");
 const publicRoot = path.join(root, "public");
@@ -30,6 +31,11 @@ const saveGalleryCaptionHandler = async (request, response) => {
     });
     if (result.error) throw result.error;
     if (result.status !== 0) throw new Error(`Gallery manifest generation failed with exit code ${result.status}.`);
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const manifestPath = path.join(root, "public", "gallery-manifest.json");
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+      await publishGalleryManifest(manifest);
+    }
     return response.status(200).json({ saved: true, ...savedCaption });
   } catch (error) {
     const statusCode = error.statusCode || 500;
@@ -42,6 +48,7 @@ const saveGalleryCaptionHandler = async (request, response) => {
 const apiHandlers = new Map([
   ["/api/assistant", require("../api/assistant")],
   ["/api/contact", require("../api/contact")],
+  ["/api/gallery-manifest", require("../api/gallery-manifest")],
   ["/api/gallery-caption", require("../api/gallery-caption")],
   ["/api/gallery-caption/save", saveGalleryCaptionHandler]
 ]);

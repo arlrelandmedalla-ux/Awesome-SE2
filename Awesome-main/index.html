@@ -892,6 +892,10 @@
       gap: 8px;
     }
 
+    .gallery-year-input-wrap {
+      position: relative;
+    }
+
     .gallery-date-back {
       display: grid;
       width: 38px;
@@ -915,12 +919,40 @@
     .gallery-year-select {
       width: 100%;
       min-height: 42px;
-      padding: 0 12px;
+      padding: 0 40px 0 12px;
       border: 1px solid rgba(165, 203, 229, 0.18);
       border-radius: 10px;
       background: #0b1b2b;
       color: #e8f5ff;
       font: 700 0.95rem var(--font-body);
+    }
+
+    .gallery-year-clear {
+      position: absolute;
+      top: 50%;
+      right: 7px;
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      padding: 0;
+      transform: translateY(-50%);
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #a5cbe5;
+      font: 700 1.25rem/1 var(--font-body);
+      cursor: pointer;
+    }
+
+    .gallery-year-clear:hover,
+    .gallery-year-clear:focus-visible {
+      background: rgba(53, 215, 232, 0.14);
+      color: #e8f5ff;
+    }
+
+    .gallery-year-clear[hidden] {
+      display: none;
     }
 
     .gallery-year-select::placeholder {
@@ -3581,7 +3613,6 @@
     }
 
     @media (max-width: 760px) {
-      .site-nav,
       .nav-links {
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
@@ -3780,7 +3811,10 @@
                     <path d="M19 12H5m0 0 7 7m-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </button>
-                <input id="galleryYear" class="gallery-year-select" type="text" inputmode="numeric" placeholder="Search year" autocomplete="off" aria-label="Search gallery by year" aria-autocomplete="list" aria-controls="galleryYearSuggestions">
+                <div class="gallery-year-input-wrap">
+                  <input id="galleryYear" class="gallery-year-select" type="text" inputmode="numeric" placeholder="Search year" autocomplete="off" aria-label="Search gallery by year" aria-autocomplete="list" aria-controls="galleryYearSuggestions">
+                  <button type="button" class="gallery-year-clear" id="galleryYearClear" aria-label="Clear year search" title="Clear year search" hidden>&times;</button>
+                </div>
               </div>
               <div id="galleryYearSuggestions" class="gallery-year-suggestions" role="listbox" aria-label="Matching gallery years" hidden></div>
               <div class="gallery-month-grid" id="galleryMonthGrid" role="group" aria-label="Filter by month">
@@ -4308,239 +4342,51 @@
 
       let galleryItems = [
         // AUTO-GALLERY-ITEMS-START
-        // ===== 2024 =====
-        {
-          year: "2024",
-          src: "/about-me/2024/1.1_1.jpg",
-          type: "image",
-          addedAt: 1794079261921.6733,
-          version: "201253-mw6sgkz7",
-          captionVersion: "201253-mw6sgkz7",
-          title: "Lake Beneath Blue Peaks",
-          description: "A still lake sits among layered pine-covered hills beneath a pale pink sky.",
-          date: "2024-01-01"
-        },
         // ===== 2025 =====
         {
           year: "2025",
-          src: "/about-me/2025/1.1_4.jpg",
+          src: "/about-me/2025/4.1_1.jpg",
           type: "image",
-          addedAt: 1794075259692.0144,
-          version: "199004-mw56skmn",
-          captionVersion: "199004-mw56skmn",
-          title: "Mountain at Dusk",
-          description: "A rugged mountain ridge glows beneath a soft pink evening sky, ARL.",
-          date: "2025-01-04"
-        },
-        {
-          year: "2025",
-          src: "/about-me/2025/1.1_5.jpg",
-          type: "image",
-          addedAt: 1795454026571.1846,
-          version: "210585-mwtdy12h",
-          captionVersion: "210585-mwtdy12h",
-          title: "Busy Office Floor",
-          description: "Staff work at individual desks among computer monitors, shelves, and office paperwork.",
-          date: "2025-01-05"
-        },
-        {
-          year: "2025",
-          src: "/about-me/2025/3.3_1.jpg",
-          type: "image",
-          addedAt: 1794506350540.2212,
-          version: "563097-mwduqca4",
-          captionVersion: "563097-mwduqca4",
-          title: "Sunset Over Icy Hills",
-          description: "A low sun glows above lavender slopes and bare trees in a stylized winter landscape.",
-          date: "2025-03-01"
-        },
-        {
-          year: "2025",
-          src: "/about-me/2025/2.12_1.jpg",
-          type: "image",
-          addedAt: 1794076231299.836,
-          version: "2069010-mw6qn9f5",
-          captionVersion: "2069010-mw6qn9f5",
-          title: "Misty Mountain Lake",
-          description: "Bird silhouettes cross the sky above layered mountain ridges, still water, and a dark pine forest.",
-          date: "2025-12-01"
+          addedAt: 1795804381309.3193,
+          version: "252384-mwz8rm4n",
+          captionVersion: "252384-mwz8rm4n",
+          title: "Office Handshake",
+          description: "Two individuals seated across a desk shake hands in a bright office space. A stack of paperwork sits on the desk in the foreground.",
+          date: "2025-01-01"
         },
         // ===== 2026 =====
         {
           year: "2026",
-          src: "/about-me/2026/9.1_1.jpg",
+          src: "/about-me/2026/9.11_1.jpg",
           type: "image",
-          addedAt: 1795150883153.3674,
+          addedAt: 1795804259127.0007,
           version: "248765-mwohun6c",
           captionVersion: "248765-mwohun6c",
-          title: "Reviewing Documents",
-          description: "Two colleagues work together reviewing paperwork at an office desk.",
-          date: "2026-01-01"
+          title: "Two women reviewing paperwork together",
+          description: "Two women wearing matching black shirts sit at a desk reviewing documents together. The woman on the left holds a pen and points at a paper while the other woman looks on.",
+          date: "2026-11-01"
         },
         {
           year: "2026",
-          src: "/about-me/2026/10.1_1.jpg",
+          src: "/about-me/2026/16.11_4.jpg",
           type: "image",
-          addedAt: 1795454797134.7432,
-          version: "842936-mwtjeg3q",
-          captionVersion: "842936-mwtjeg3q",
-          title: "Blossom Tree Valley",
-          description: "A flowering tree frames a winding path through a green valley toward a distant mountain.",
-          date: "2026-01-01"
+          addedAt: 1795804253594.094,
+          version: "210585-mwz8pf8n",
+          captionVersion: "210585-mwz8pf8n",
+          title: "Compact Office Interior",
+          description: "Three individuals are seated at desks working on computers in a small, narrow office. Shelves lined with books and folders are mounted on the wall above one desk.",
+          date: "2026-11-04"
         },
         {
           year: "2026",
-          src: "/about-me/2026/6.1_2.jpg",
-          type: "image",
-          addedAt: 1794076877646.4138,
-          version: "5516947-mw6r1clx",
-          captionVersion: "5516947-mw6r1clx",
-          title: "Mountain Lake",
-          description: "An illustrated mountain range, evergreen trees, and clouds surround a blue lake.",
-          date: "2026-01-02"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/8.1_3.jpg",
-          type: "image",
-          addedAt: 1794568780372.2288,
-          version: "734650-mwevu4qk",
-          captionVersion: "734650-mwevu4qk",
-          title: "Golden Hour in a Flower Field",
-          description: "The sun sets over rolling green fields as yellow flowers fill the foreground.",
-          date: "2026-01-03"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/7.1_4.jpg",
-          type: "image",
-          addedAt: 1794568796803.697,
-          version: "1314807-mwdwccft",
-          captionVersion: "1314807-mwdwccft",
-          title: "Hikers on a Green Ridge",
-          description: "Small hikers follow a winding trail across a bright green mountain ridge beneath patterned clouds.",
-          date: "2026-01-04"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/2.1_19.jpg",
-          type: "image",
-          addedAt: 1794075003890.243,
-          version: "12204443-mw544ye4",
-          captionVersion: "12204443-mw544ye4",
-          title: "Cloudscape",
-          description: "Soft clouds fill the sky in this gentle, dreamy scene.",
-          date: "2026-01-19"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/2.1_19.mp4",
+          src: "/about-me/2026/16.11_4.mp4",
           type: "video",
-          addedAt: 1794170582538.321,
-          version: "35806769-msfnhmo4",
-          captionVersion: "35806769-msfnhmo4",
-          title: "Clouds Moving Overhead",
-          description: "Wisps of cloud drift across an open sky, changing shape as the scene unfolds.",
-          date: "2026-01-19"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/1.1_20.jpg",
-          type: "image",
-          addedAt: 1794074992982.2043,
-          version: "2191403-mw5468x6",
-          captionVersion: "2191403-mw5468x6",
-          title: "Floral Design",
-          description: "A delicate floral illustration adds a calm, personal touch to a deep blue background.",
-          date: "2026-01-20"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/3.1_25.jpg",
-          type: "image",
-          addedAt: 1794074998181.0847,
-          version: "2653254-mw545t1r",
-          captionVersion: "2653254-mw545t1r",
-          title: "Open Sky",
-          description: "A peaceful view of open sky and clouds, captured in a soft pastel palette.",
-          date: "2026-01-25"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/4.2_1.jpg",
-          type: "image",
-          addedAt: 1794075012315.8608,
-          version: "1734424-mw56rinp",
-          captionVersion: "1734424-mw56rinp",
-          title: "Sunset Valley",
-          description: "A glowing sunset stretches across a peaceful valley and distant mountains.",
-          date: "2026-02-01"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/11.2_2.jpg",
-          type: "image",
-          addedAt: 1795455578804.236,
-          version: "487563-mwtjvh5u",
-          captionVersion: "487563-mwtjvh5u",
-          title: "Curved Garden Walkway",
-          description: "A pale path winds through a landscaped courtyard with ornamental grasses, mature trees, and glass-fronted buildings.",
-          date: "2026-02-02"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/12.2_2.jpg",
-          type: "image",
-          addedAt: 1795459146727.8943,
-          version: "683139-mw56rxio",
-          captionVersion: "683139-mw56rxio",
-          title: "Sunlight Through Red Leaves",
-          description: "Sunlight breaks through a broad red maple canopy above a mossy slope and scattered rocks.",
-          date: "2026-02-02"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/13.2_4.jpeg",
-          type: "image",
-          addedAt: 1795460893779.1907,
-          version: "504122-mwtl3re3",
-          captionVersion: "504122-mwtl3re3",
-          title: "Conference Room Presentation",
-          description: "Colleagues gather around a large table while two presenters speak beside a projected slide and wall display.",
-          date: "2026-02-04"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/8.3_1.jpg",
-          type: "image",
-          addedAt: 1794075034966.582,
-          version: "683139-mw56rxio",
-          captionVersion: "683139-mw56rxio",
-          title: "Autumn Colors",
-          description: "Vibrant red leaves frame a sunlit tree above a lush green garden.",
-          date: "2026-03-01"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/7.4_1.jpg",
-          type: "image",
-          addedAt: 1794075029044.6333,
-          version: "1125455-mwdx6qgk",
-          captionVersion: "1125455-mwdx6qgk",
-          title: "Evening Storm",
-          description: "Lightning illuminates dramatic clouds over a quiet waterside landscape.",
-          date: "2026-04-01"
-        },
-        {
-          year: "2026",
-          src: "/about-me/2026/5.5_1.jpg",
-          type: "image",
-          addedAt: 1794075046863.8428,
-          version: "353152-mw56srw6",
-          captionVersion: "353152-mw56srw6",
-          title: "Lakeside Sky",
-          description: "Blue evening clouds and warm sunset colors reflect across a calm lake.",
-          date: "2026-05-01"
+          addedAt: 1795804299388.5708,
+          version: "13022325-mwz8o1c6",
+          captionVersion: "13022325-mwz8o1c6",
+          title: "Gallery Video",
+          description: "A video from the company gallery.",
+          date: "2026-11-04"
         }
         // AUTO-GALLERY-ITEMS-END
       ];
@@ -4548,14 +4394,8 @@
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
       ];
-      function getNewestGalleryItem(items) {
-        return items.reduce((newest, item) =>
-          Number.isFinite(item.addedAt) && (!newest || item.addedAt > newest.addedAt) ? item : newest,
-        null);
-      }
-
-      const newestInitialGalleryItem = getNewestGalleryItem(galleryItems);
       const galleryYear = document.getElementById("galleryYear");
+      const galleryYearClear = document.getElementById("galleryYearClear");
       const galleryYearSuggestions = document.getElementById("galleryYearSuggestions");
       const galleryGrid = document.getElementById("galleryGrid");
       const galleryShowMore = document.getElementById("galleryShowMore");
@@ -4576,7 +4416,7 @@
       const galleryDateLabel = document.getElementById("galleryDateLabel");
       const galleryMonthButtons = document.querySelectorAll(".gallery-month-option");
       let selectedMonth = "all";
-      const defaultGalleryYear = newestInitialGalleryItem?.year || "2026";
+      const defaultGalleryYear = String(new Date().getFullYear());
       let availableGalleryYears = [];
       let allGalleryYearSuggestions = [];
       let selectedYear = defaultGalleryYear;
@@ -4722,8 +4562,9 @@
       }
 
       function selectGalleryYear(year) {
-        galleryYear.value = year === "all" ? "" : year;
+        galleryYear.value = year === "all" ? "All years" : year;
         selectedYear = year;
+        galleryYearClear.hidden = !galleryYear.value;
         galleryYearSuggestions.hidden = true;
         updateGalleryDateLabel();
         renderGallery();
@@ -4738,18 +4579,19 @@
           ...Array.from({ length: 9999 }, (_, index) => String(index + 1).padStart(4, "0")),
           ...availableGalleryYears
         ])].sort((a, b) => Number(a) - Number(b));
-        selectedYear = selectedYear === "all"
-          ? "all"
+        selectedYear = selectedYear === "all" || selectedYear === ""
+          ? selectedYear
           : availableGalleryYears.includes(selectedYear)
             ? selectedYear
             : availableGalleryYears[0] || "all";
-        galleryYear.value = selectedYear === "all" ? "" : selectedYear;
+        galleryYear.value = selectedYear === "all" ? "All years" : selectedYear;
+        galleryYearClear.hidden = !galleryYear.value;
         updateGalleryDateLabel();
         renderGallery();
       }
 
       function updateGalleryDateLabel() {
-        const yearLabel = selectedYear === "all" ? "All years" : selectedYear;
+        const yearLabel = selectedYear === "all" ? "All years" : selectedYear || "Select year";
         if (selectedMonth === "all") {
           galleryDateLabel.textContent = `${yearLabel} · All months`;
         } else {
@@ -4837,7 +4679,9 @@
         if (!filtered.length) {
           const empty = document.createElement("p");
           empty.className = "gallery-empty";
-          empty.textContent = selectedYear !== "all" && !selectedYearIsAvailable
+          empty.textContent = selectedYear === ""
+            ? "Enter a year to view gallery images."
+            : selectedYear !== "all" && !selectedYearIsAvailable
             ? "No records yet."
             : selectedYearIsAvailable && galleryItems.length
               ? "No image here yet for the selected year and month."
@@ -5162,7 +5006,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               year: item.year,
-              fileName: new URL(item.src, document.baseURI).pathname.split("/").pop(),
+              fileName: item.fileName || new URL(item.src, document.baseURI).pathname.split("/").pop(),
               version: item.version,
               title: result.title.trim(),
               description: result.description.trim()
@@ -5286,27 +5130,39 @@
         let manifest;
         const manifestCandidates = [
           {
+            url: new URL("api/gallery-manifest", document.baseURI),
+            assetPrefix: "",
+            cacheBust: false
+          },
+          {
             url: new URL("public/gallery-manifest.json", document.baseURI),
-            assetPrefix: new URL("public/", document.baseURI).pathname
+            assetPrefix: new URL("public/", document.baseURI).pathname,
+            cacheBust: true
           },
           {
             url: new URL("gallery-manifest.json", document.baseURI),
-            assetPrefix: ""
+            assetPrefix: "",
+            cacheBust: true
           },
           {
             url: new URL("/gallery-manifest.json", window.location.origin),
-            assetPrefix: ""
+            assetPrefix: "",
+            cacheBust: true
           },
           {
             url: new URL("/Awesome-main/public/gallery-manifest.json", window.location.origin),
-            assetPrefix: "/Awesome-main/public/"
+            assetPrefix: "/Awesome-main/public/",
+            cacheBust: true
           }
         ];
         let manifestLoaded = false;
         for (const candidate of manifestCandidates) {
           let response;
           try {
-            response = await fetch(`${candidate.url.href}?updated=${Date.now()}`, { cache: "no-store" });
+            const requestUrl = candidate.cacheBust
+              ? `${candidate.url.href}?updated=${Date.now()}`
+              : candidate.url.href;
+            response = await fetch(requestUrl, { cache: candidate.cacheBust ? "no-store" : "default" });
           } catch (error) {
             continue;
           }
@@ -5411,10 +5267,11 @@
       });
       function updateGalleryYearFilter() {
         const year = galleryYear.value.trim();
-        if (!year || year.toLowerCase() === "all years") {
+        galleryYearClear.hidden = !year;
+        if (year.toLowerCase() === "all years") {
           selectedYear = "all";
         } else {
-          selectedYear = /^\d{4,}$/.test(year) ? year : "all";
+          selectedYear = /^\d{4,}$/.test(year) ? year : "";
         }
         updateGalleryDateLabel();
         renderGallery();
@@ -5425,6 +5282,11 @@
       }
       galleryYear.addEventListener("input", handleGalleryYearInput);
       galleryYear.addEventListener("change", updateGalleryYearFilter);
+      galleryYearClear.addEventListener("click", () => {
+        galleryYear.value = "";
+        handleGalleryYearInput();
+        galleryYear.focus({ preventScroll: true });
+      });
       galleryYear.addEventListener("focus", () => {
         galleryYear.select();
         renderGalleryYearSuggestions();

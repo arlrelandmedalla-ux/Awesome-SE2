@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "node scripts/generate-gallery-manifest.js",
+    "test": "node --test scripts/gallery-blob-store.test.js scripts/sync-gallery-media.test.js",
     "prestart": "npm run build",
     "start": "vercel dev",
     "predev": "npm run build",
@@ -11,6 +12,7 @@
   },
   "dependencies": {
     "@google/genai": "^3.3.0",
-    "@sendgrid/mail": "^8.1.6"
+    "@sendgrid/mail": "^8.1.6",
+    "@vercel/blob": "2.4.0"
   }
 }

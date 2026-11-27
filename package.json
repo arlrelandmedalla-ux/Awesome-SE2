@@ -5,6 +5,7 @@
   },
   "dependencies": {
     "@google/genai": "^3.3.0",
-    "@sendgrid/mail": "^8.1.6"
+    "@sendgrid/mail": "^8.1.6",
+    "@vercel/blob": "2.4.0"
   }
 }
