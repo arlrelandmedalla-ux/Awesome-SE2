@@ -4137,7 +4137,7 @@
         <img class="voice-header-logo" src="public/logo-awe.jpg" alt="Awesome Accounting Services logo" />
         <div>
           <h2 id="voiceTitle">Select Service</h2>
-          <p id="voiceServiceScope" class="voice-service-scope" hidden>AI responses are based only on this service.</p>
+          <p id="voiceServiceScope" class="voice-service-scope" hidden>Ask about any information on this website.</p>
         </div>
       </div>
       <div class="voice-header-actions">
@@ -5954,6 +5954,20 @@
           );
         }
         if (/\b(gallery|photos?|videos?|pictures?)\b|(?:larawan|bidyo|gallery)/i.test(question)) {
+          if (/\b(years?|when|dates?)\b|(?:taon|kailan)/i.test(question)) {
+            const years = [...new Set(galleryItems
+              .map((item) => String(item.year))
+              .filter((year) => /^\d{4}$/.test(year)))]
+              .sort((a, b) => Number(a) - Number(b));
+            return respond(
+              years.length
+                ? `The About Us Gallery currently has photos and videos from ${years.join(", ")}.`
+                : "There are currently no published photos or videos in the About Us Gallery.",
+              years.length
+                ? `Sa kasalukuyan, may mga larawan at video sa About Us Gallery mula sa mga taong ${years.join(", ")}.`
+                : "Sa ngayon, wala pang naka-publish na larawan o video sa About Us Gallery."
+            );
+          }
           const itemCount = galleryItems.length;
           if (/\b(how many|do you have|is there|tell me about|about the|show me)\b|(?:ilan|mayroon ba|meron ba|sabihin.*tungkol)/i.test(question)) {
             return respond(
@@ -6428,9 +6442,7 @@
             question,
             language: detectQuestionLanguage(question),
             history: conversation.slice(-8, -1),
-            ...(/\b(gallery|photos?|videos?|achiev\w*|awards?|milestones?)\b|(?:gallery|larawan|bidyo|tagumpay|parangal)/i.test(question)
-              ? { websiteContext: getWebsiteContext() }
-              : {})
+            websiteContext: getWebsiteContext()
           });
           const data = await readAssistantResponse(response, "The assistant could not answer right now");
           if (requestVersion !== conversationVersion) return;

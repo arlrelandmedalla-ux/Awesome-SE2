@@ -134,8 +134,9 @@ module.exports = async (req, res) => {
   if (websiteContext !== undefined && (typeof websiteContext !== "string" || websiteContext.length > 30000)) {
     return res.status(400).json({ error: "Website information is invalid or too long." });
   }
-  const websiteInformation = typeof websiteContext === "string" && websiteContext.trim()
-    ? websiteContext.trim()
+  const liveWebsiteContext = typeof websiteContext === "string" ? websiteContext.trim() : "";
+  const websiteInformation = liveWebsiteContext
+    ? `${WEBSITE_CONTEXT}\n\nCURRENT WEBSITE CONTENT:\n${liveWebsiteContext}`
     : WEBSITE_CONTEXT;
 
   const safeHistory = action === "answer" ? (history || []).map((message) => {

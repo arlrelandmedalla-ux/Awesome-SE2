@@ -40,7 +40,7 @@ Voice AI
 - Gemini detects whether each question is primarily English or Tagalog and replies in that language. Each assistant message has controls to read it aloud or translate it to the other language.
 - The assistant answers common English and Tagalog/Taglish questions about service purpose, use, and importance from published website details; it does not guess unpublished prices or case-specific amounts.
 - Gemini requests and translation are handled by `api/assistant.js`; the API key is read only from the server environment. Questions requiring case-specific review are directed to the contact form.
-- Common service questions are answered immediately from published service details; other questions use Gemini with the curated company context, and gallery questions include the current published items.
+- Common service and gallery-year questions are answered immediately from published details. Other questions use Gemini with the curated company facts plus current page content, published gallery items, and contact links.
 - For the repository-root setup shown in the deployment logs, use **Root Directory** `.` (the repository root), **Framework Preset** **Other**, **Build Command** `npm run build`, and **Output Directory** `public`. The root build generates this output directory and Vercel discovers the AI, gallery-caption, and contact functions from the root `api/` directory.
 - If you instead set **Root Directory** to this inner `Awesome-main` folder, use **Build Command** `npm run build` and leave **Output Directory** blank. Do not mix the inner-folder settings with the repository-root build.
 
