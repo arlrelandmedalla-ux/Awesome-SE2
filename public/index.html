@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
   <script>
     const navigationEntry = performance.getEntriesByType("navigation")[0];
-    if (navigationEntry?.type === "reload" && "scrollRestoration" in history) {
+    if (["navigate", "reload"].includes(navigationEntry?.type) && "scrollRestoration" in history) {
       history.scrollRestoration = "manual";
       window.addEventListener("pageshow", () => {
         const previousScrollBehavior = document.documentElement.style.scrollBehavior;

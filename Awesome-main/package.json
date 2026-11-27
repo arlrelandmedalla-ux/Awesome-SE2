@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "node scripts/generate-gallery-manifest.js",
-    "test": "node --test api/assistant.test.js scripts/gallery-blob-store.test.js scripts/sync-gallery-media.test.js",
+    "test": "node --test api/assistant.test.js scripts/gallery-blob-store.test.js scripts/page-navigation.test.js scripts/sync-gallery-media.test.js",
     "prestart": "npm run build",
     "start": "vercel dev",
     "predev": "npm run build",
